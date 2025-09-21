@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 
 # CementMind AI- An AI Operating Workbench For  Raw Material and  Logistics Automation  with   Autonomous Real-Time Cement Quality Detection and Correction
+=======
+# CementMind AI- An AI Operating Workbench For  Raw Material and  Logistics Automation  with   Autonomous Real-Time Cement Quality Detection and Correction
+>>>>>>> 210beb921bd91a85b5dead192a025d2d2200d0f7
 
 CementMind AI is a comprehensive industrial IoT platform designed specifically for cement manufacturing plants. It leverages Google's cutting-edge technologies including Gemini AI, Firebase, BigQuery, and Cloud Vision to provide real-time monitoring, predictive analytics, and intelligent insights for cement production processes.
 
