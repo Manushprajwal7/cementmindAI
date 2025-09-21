@@ -33,7 +33,7 @@ interface UserRole {
 const mockUsers: SystemUser[] = [
   {
     id: "1",
-    name: "John Smith",
+    name: "Sachin",
     email: "john.smith@company.com",
     role: "admin",
     department: "IT",
@@ -44,7 +44,7 @@ const mockUsers: SystemUser[] = [
   },
   {
     id: "2",
-    name: "Maria Garcia",
+    name: "Virat",
     email: "maria.garcia@company.com",
     role: "manager",
     department: "Production",
@@ -55,7 +55,7 @@ const mockUsers: SystemUser[] = [
   },
   {
     id: "3",
-    name: "Robert Johnson",
+    name: "Rishab",
     email: "robert.johnson@company.com",
     role: "operator",
     department: "Operations",
@@ -66,7 +66,7 @@ const mockUsers: SystemUser[] = [
   },
   {
     id: "4",
-    name: "Sarah Wilson",
+    name: "Rohit",
     email: "sarah.wilson@company.com",
     role: "viewer",
     department: "Quality",

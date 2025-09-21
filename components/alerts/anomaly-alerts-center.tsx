@@ -1,41 +1,64 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Search, Filter, Download, RefreshCw, Settings, AlertTriangle } from "lucide-react"
-import { AlertsTable } from "./alerts-table"
-import { AnomalyModal } from "./anomaly-modal"
-import { LiveEventToast } from "./live-event-toast"
-import { BulkActionsPanel } from "./bulk-actions-panel"
-import { AlertRoutingConfig } from "./alert-routing-config"
-import { IncidentTimeline } from "./incident-timeline"
-import { AlertCorrelation } from "./alert-correlation"
-import type { AnomalyDetail } from "@/types/anomaly"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  Settings,
+  AlertTriangle,
+  AlertCircle,
+} from "lucide-react";
+import { AlertsTable } from "./alerts-table";
+import { AnomalyModal } from "./anomaly-modal";
+import { LiveEventToast } from "./live-event-toast";
+import { BulkActionsPanel } from "./bulk-actions-panel";
+import { AlertRoutingConfig } from "./alert-routing-config";
+import { IncidentTimeline } from "./incident-timeline";
+import { AlertCorrelation } from "./alert-correlation";
+import type { AnomalyDetail } from "@/types/anomaly";
+import { useRealTimeData } from "@/hooks/use-real-time-data";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Mock anomaly data
 const generateMockAnomalies = (): AnomalyDetail[] => {
-  const anomalies: AnomalyDetail[] = []
-  const now = new Date()
+  const anomalies: AnomalyDetail[] = [];
+  const now = new Date();
 
-  const types = ["Temperature Spike", "Pressure Drop", "Flow Irregularity", "Energy Anomaly", "Quality Deviation"]
-  const severities: Array<"low" | "medium" | "high" | "critical"> = ["low", "medium", "high", "critical"]
-  const statuses: Array<"new" | "acknowledged" | "investigating" | "resolved"> = [
-    "new",
-    "acknowledged",
-    "investigating",
-    "resolved",
-  ]
+  const types = [
+    "Temperature Spike",
+    "Pressure Drop",
+    "Flow Irregularity",
+    "Energy Anomaly",
+    "Quality Deviation",
+  ];
+  const severities: Array<"low" | "medium" | "high" | "critical"> = [
+    "low",
+    "medium",
+    "high",
+    "critical",
+  ];
+  const statuses: Array<"new" | "acknowledged" | "investigating" | "resolved"> =
+    ["new", "acknowledged", "investigating", "resolved"];
 
   for (let i = 0; i < 150; i++) {
-    const timestamp = new Date(now.getTime() - i * 5 * 60 * 1000) // Every 5 minutes
-    const type = types[Math.floor(Math.random() * types.length)]
-    const severity = severities[Math.floor(Math.random() * severities.length)]
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
+    const timestamp = new Date(now.getTime() - i * 5 * 60 * 1000); // Every 5 minutes
+    const type = types[Math.floor(Math.random() * types.length)];
+    const severity = severities[Math.floor(Math.random() * severities.length)];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
 
     anomalies.push({
       id: `anomaly-${i + 1}`,
@@ -64,77 +87,149 @@ const generateMockAnomalies = (): AnomalyDetail[] => {
         "Inspect material quality",
         "Monitor environmental conditions",
       ],
-      description: `${type} detected in system monitoring with ${((0.6 + Math.random() * 0.4) * 100).toFixed(
-        1,
-      )}% confidence`,
+      description: `${type} detected in system monitoring with ${(
+        (0.6 + Math.random() * 0.4) *
+        100
+      ).toFixed(1)}% confidence`,
       assignee: Math.random() > 0.5 ? "J. Smith" : null,
-    })
+    });
   }
 
-  return anomalies
-}
+  return anomalies;
+};
 
 export function AnomalyAlertsCenter() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [severityFilter, setSeverityFilter] = useState<string>("all")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyDetail | null>(null)
-  const [anomalies] = useState(generateMockAnomalies())
-  const [selectedAnomalies, setSelectedAnomalies] = useState<string[]>([])
-  const [showBulkActions, setShowBulkActions] = useState(false)
-  const [showRoutingConfig, setShowRoutingConfig] = useState(false)
-  const [showIncidentTimeline, setShowIncidentTimeline] = useState(false)
-  const [showCorrelation, setShowCorrelation] = useState(false)
-  const [activeTab, setActiveTab] = useState<"alerts" | "routing" | "timeline" | "correlation">("alerts")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyDetail | null>(
+    null
+  );
+  const [selectedAnomalies, setSelectedAnomalies] = useState<string[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showRoutingConfig, setShowRoutingConfig] = useState(false);
+  const [showIncidentTimeline, setShowIncidentTimeline] = useState(false);
+  const [showCorrelation, setShowCorrelation] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "alerts" | "routing" | "timeline" | "correlation"
+  >("alerts");
+
+  // Get real-time data from Firebase
+  const { currentData, error, loading } = useRealTimeData();
+
+  // Use Firebase data or fallback to mock data if not available
+  const rawAnomalies = currentData?.alerts || generateMockAnomalies();
+
+  // Convert union type to AnomalyDetail[] for compatibility
+  const anomalies: AnomalyDetail[] = rawAnomalies.map((anomaly) => {
+    if ("description" in anomaly) {
+      // Already AnomalyDetail
+      return anomaly as AnomalyDetail;
+    } else {
+      // Convert from Firebase alert format to AnomalyDetail
+      return {
+        id: anomaly.id,
+        timestamp: new Date().toISOString(),
+        type: anomaly.type,
+        severity: anomaly.severity,
+        confidence: 0.8, // Default confidence
+        status: "new" as const, // Default status
+        affected_sensors: [],
+        potential_causes: [],
+        recommended_actions: [],
+        description: anomaly.message,
+        assignee: null,
+      };
+    }
+  });
 
   const filteredAnomalies = anomalies.filter((anomaly) => {
     const matchesSearch =
       searchTerm === "" ||
       anomaly.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      anomaly.description.toLowerCase().includes(searchTerm.toLowerCase())
+      anomaly.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesSeverity = severityFilter === "all" || anomaly.severity === severityFilter
-    const matchesStatus = statusFilter === "all" || anomaly.status === statusFilter
+    const matchesSeverity =
+      severityFilter === "all" || anomaly.severity === severityFilter;
+    const matchesStatus =
+      statusFilter === "all" || anomaly.status === statusFilter;
 
-    return matchesSearch && matchesSeverity && matchesStatus
-  })
+    return matchesSearch && matchesSeverity && matchesStatus;
+  });
 
   const severityCounts = {
-    critical: anomalies.filter((a) => a.severity === "critical" && a.status !== "resolved").length,
-    high: anomalies.filter((a) => a.severity === "high" && a.status !== "resolved").length,
-    medium: anomalies.filter((a) => a.severity === "medium" && a.status !== "resolved").length,
-    low: anomalies.filter((a) => a.severity === "low" && a.status !== "resolved").length,
-  }
+    critical: anomalies.filter(
+      (a) => a.severity === "critical" && a.status !== "resolved"
+    ).length,
+    high: anomalies.filter(
+      (a) => a.severity === "high" && a.status !== "resolved"
+    ).length,
+    medium: anomalies.filter(
+      (a) => a.severity === "medium" && a.status !== "resolved"
+    ).length,
+    low: anomalies.filter(
+      (a) => a.severity === "low" && a.status !== "resolved"
+    ).length,
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAnomalies(filteredAnomalies.map((a) => a.id))
+      setSelectedAnomalies(filteredAnomalies.map((a) => a.id));
     } else {
-      setSelectedAnomalies([])
+      setSelectedAnomalies([]);
     }
-  }
+  };
 
   const handleSelectAnomaly = (anomalyId: string, checked: boolean) => {
     if (checked) {
-      setSelectedAnomalies((prev) => [...prev, anomalyId])
+      setSelectedAnomalies((prev) => [...prev, anomalyId]);
     } else {
-      setSelectedAnomalies((prev) => prev.filter((id) => id !== anomalyId))
+      setSelectedAnomalies((prev) => prev.filter((id) => id !== anomalyId));
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Error display */}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Loading state */}
+      {loading && !error && (
+        <div className="flex items-center justify-center p-4 mb-4 bg-muted rounded-md">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+          <p>Loading anomaly alerts...</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Anomaly & Alerts Center</h2>
-          <p className="text-muted-foreground">Monitor and manage system anomalies and alerts</p>
+          <h2 className="text-3xl font-bold text-foreground">
+            Anomaly & Alerts Center
+          </h2>
+          <p className="text-muted-foreground">
+            Monitor and manage system anomalies and alerts
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={() => setShowCorrelation(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCorrelation(true)}
+          >
             <AlertTriangle className="mr-2 h-4 w-4" />
             Correlation
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowRoutingConfig(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowRoutingConfig(true)}
+          >
             <Settings className="mr-2 h-4 w-4" />
             Routing
           </Button>
@@ -191,8 +286,12 @@ export function AnomalyAlertsCenter() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Critical</p>
-                    <p className="text-2xl font-bold text-red-600">{severityCounts.critical}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Critical
+                    </p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {severityCounts.critical}
+                    </p>
                   </div>
                   <div className="w-3 h-3 bg-red-500 rounded-full" />
                 </div>
@@ -202,8 +301,12 @@ export function AnomalyAlertsCenter() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">High</p>
-                    <p className="text-2xl font-bold text-orange-600">{severityCounts.high}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      High
+                    </p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {severityCounts.high}
+                    </p>
                   </div>
                   <div className="w-3 h-3 bg-orange-500 rounded-full" />
                 </div>
@@ -213,8 +316,12 @@ export function AnomalyAlertsCenter() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Medium</p>
-                    <p className="text-2xl font-bold text-amber-600">{severityCounts.medium}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Medium
+                    </p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {severityCounts.medium}
+                    </p>
                   </div>
                   <div className="w-3 h-3 bg-amber-500 rounded-full" />
                 </div>
@@ -224,8 +331,12 @@ export function AnomalyAlertsCenter() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Low</p>
-                    <p className="text-2xl font-bold text-blue-600">{severityCounts.low}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Low
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {severityCounts.low}
+                    </p>
                   </div>
                   <div className="w-3 h-3 bg-blue-500 rounded-full" />
                 </div>
@@ -239,8 +350,8 @@ export function AnomalyAlertsCenter() {
               selectedAnomalies={selectedAnomalies}
               onClearSelection={() => setSelectedAnomalies([])}
               onBulkAction={(action) => {
-                console.log(`Bulk ${action} for`, selectedAnomalies)
-                setSelectedAnomalies([])
+                console.log(`Bulk ${action} for`, selectedAnomalies);
+                setSelectedAnomalies([]);
               }}
             />
           )}
@@ -248,13 +359,20 @@ export function AnomalyAlertsCenter() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">Filters & Search</CardTitle>
+                <CardTitle className="text-lg font-semibold">
+                  Filters & Search
+                </CardTitle>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    checked={selectedAnomalies.length === filteredAnomalies.length && filteredAnomalies.length > 0}
+                    checked={
+                      selectedAnomalies.length === filteredAnomalies.length &&
+                      filteredAnomalies.length > 0
+                    }
                     onCheckedChange={handleSelectAll}
                   />
-                  <span className="text-sm text-muted-foreground">Select All</span>
+                  <span className="text-sm text-muted-foreground">
+                    Select All
+                  </span>
                 </div>
               </div>
             </CardHeader>
@@ -271,7 +389,10 @@ export function AnomalyAlertsCenter() {
                     />
                   </div>
                 </div>
-                <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                <Select
+                  value={severityFilter}
+                  onValueChange={setSeverityFilter}
+                >
                   <SelectTrigger className="w-48">
                     <Filter className="mr-2 h-4 w-4" />
                     <SelectValue placeholder="Filter by severity" />
@@ -304,27 +425,35 @@ export function AnomalyAlertsCenter() {
             <p className="text-sm text-muted-foreground">
               Showing {filteredAnomalies.length} of {anomalies.length} anomalies
             </p>
-            <Badge variant="outline">{filteredAnomalies.filter((a) => a.status === "new").length} New Alerts</Badge>
+            <Badge variant="outline">
+              {filteredAnomalies.filter((a) => a.status === "new").length} New
+              Alerts
+            </Badge>
           </div>
 
           <AlertsTable
             data={filteredAnomalies}
             onRowClick={setSelectedAnomaly}
-            selectedAnomalies={selectedAnomalies}
-            onSelectAnomaly={handleSelectAnomaly}
           />
         </>
       )}
 
       {activeTab === "timeline" && <IncidentTimeline anomalies={anomalies} />}
 
-      {activeTab === "correlation" && <AlertCorrelation anomalies={anomalies} />}
+      {activeTab === "correlation" && (
+        <AlertCorrelation anomalies={anomalies} />
+      )}
 
       {activeTab === "routing" && <AlertRoutingConfig />}
 
-      {selectedAnomaly && <AnomalyModal anomaly={selectedAnomaly} onClose={() => setSelectedAnomaly(null)} />}
+      {selectedAnomaly && (
+        <AnomalyModal
+          anomaly={selectedAnomaly}
+          onClose={() => setSelectedAnomaly(null)}
+        />
+      )}
 
       <LiveEventToast />
     </div>
-  )
+  );
 }

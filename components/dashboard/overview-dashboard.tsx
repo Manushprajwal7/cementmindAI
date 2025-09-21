@@ -111,7 +111,7 @@ export function OverviewDashboard() {
         <h2 className="text-3xl font-bold text-foreground">Plant Overview</h2>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-muted-foreground">Live Data Stream</span>
+          <span className="text-sm text-muted-foreground">Live Data Stream (Simulated)</span>
         </div>
       </div>
 

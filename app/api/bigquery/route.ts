@@ -20,13 +20,33 @@ export async function POST(req: NextRequest) {
     };
     if (params) options.params = params;
 
+    // Track query execution time
+    const startTime = Date.now();
     const [job] = await bq.createQueryJob(options);
     const [rows] = await job.getQueryResults();
+    const executionTime = Date.now() - startTime;
 
-    return new Response(JSON.stringify({ rows }), { status: 200 });
-  } catch (err: any) {
+    // Return enhanced response with metadata
     return new Response(
-      JSON.stringify({ error: err?.message || "Unknown error" }),
+      JSON.stringify({
+        rows,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          rowCount: rows.length,
+          executionTimeMs: executionTime,
+          jobId: job.id,
+          projectId
+        }
+      }), 
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error("BigQuery API error:", err);
+    return new Response(
+      JSON.stringify({ 
+        error: err?.message || "Unknown error",
+        timestamp: new Date().toISOString()
+      }),
       { status: 500 }
     );
   }

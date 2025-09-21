@@ -1,34 +1,46 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RefreshCw, TrendingUp } from "lucide-react"
-import { LogisticsMap } from "./logistics-map"
-import { TruckGantt } from "./truck-gantt"
-import { PerformanceMetrics } from "./performance-metrics"
-import { RouteOptimizer } from "./route-optimizer"
-import { TruckManagement } from "./truck-management"
-import { PredictiveMaintenance } from "./predictive-maintenance"
-import { DriverPerformance } from "./driver-performance"
-import { DeliveryConfirmation } from "./delivery-confirmation"
-import type { TruckSchedule, LogisticsRecommendation } from "@/types/logistics"
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefreshCw, TrendingUp, AlertCircle } from "lucide-react";
+import { LogisticsMap } from "./logistics-map";
+import { TruckGantt } from "./truck-gantt";
+import { PerformanceMetrics } from "./performance-metrics";
+import { RouteOptimizer } from "./route-optimizer";
+import { TruckManagement } from "./truck-management";
+import { PredictiveMaintenance } from "./predictive-maintenance";
+import { DriverPerformance } from "./driver-performance";
+import { DeliveryConfirmation } from "./delivery-confirmation";
+import type { TruckSchedule, LogisticsRecommendation } from "@/types/logistics";
+import { useRealTimeData } from "@/hooks/use-real-time-data";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock logistics data
 const generateMockLogisticsData = (): {
-  trucks: TruckSchedule[]
-  recommendations: LogisticsRecommendation
+  trucks: TruckSchedule[];
+  recommendations: LogisticsRecommendation;
 } => {
   const trucks: TruckSchedule[] = [
     {
       id: "truck-001",
       truck_number: "T-001",
       driver: "John Smith",
-      status: "transit",
-      current_location: { lat: 40.7128, lng: -74.006, address: "Manhattan, NY" },
-      destination: { lat: 40.7589, lng: -73.9851, address: "Central Park, NY", site_name: "Site A" },
+      status: "transit" as const,
+      current_location: {
+        lat: 40.7128,
+        lng: -74.006,
+        address: "Manhattan, NY",
+      },
+      destination: {
+        lat: 40.7589,
+        lng: -73.9851,
+        address: "Central Park, NY",
+        site_name: "Site A",
+      },
       eta: "14:30",
       load_capacity: 25000,
       current_load: 22000,
@@ -40,9 +52,14 @@ const generateMockLogisticsData = (): {
       id: "truck-002",
       truck_number: "T-002",
       driver: "Maria Garcia",
-      status: "loading",
+      status: "loading" as const,
       current_location: { lat: 40.7282, lng: -73.7949, address: "Queens, NY" },
-      destination: { lat: 40.6892, lng: -74.0445, address: "Brooklyn, NY", site_name: "Site B" },
+      destination: {
+        lat: 40.6892,
+        lng: -74.0445,
+        address: "Brooklyn, NY",
+        site_name: "Site B",
+      },
       eta: "15:15",
       load_capacity: 25000,
       current_load: 0,
@@ -54,9 +71,18 @@ const generateMockLogisticsData = (): {
       id: "truck-003",
       truck_number: "T-003",
       driver: "Robert Johnson",
-      status: "unloading",
-      current_location: { lat: 40.6892, lng: -74.0445, address: "Brooklyn, NY" },
-      destination: { lat: 40.7128, lng: -74.006, address: "Manhattan, NY", site_name: "Plant" },
+      status: "unloading" as const,
+      current_location: {
+        lat: 40.6892,
+        lng: -74.0445,
+        address: "Brooklyn, NY",
+      },
+      destination: {
+        lat: 40.7128,
+        lng: -74.006,
+        address: "Manhattan, NY",
+        site_name: "Plant",
+      },
       eta: "16:00",
       load_capacity: 25000,
       current_load: 24500,
@@ -64,12 +90,23 @@ const generateMockLogisticsData = (): {
       fuel_level: 60,
       last_updated: new Date().toISOString(),
     },
-  ]
+  ];
 
   const recommendations: LogisticsRecommendation = {
     truck_scheduling: {
       predicted_demand: [12, 15, 18, 22, 25, 28, 24, 20, 16, 14, 12, 10],
-      optimal_schedule: { 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 6, 14: 5, 15: 4, 16: 3, 17: 2 },
+      optimal_schedule: {
+        8: 3,
+        9: 4,
+        10: 5,
+        11: 6,
+        12: 7,
+        13: 6,
+        14: 5,
+        15: 4,
+        16: 3,
+        17: 2,
+      },
       total_trucks_needed: 12,
       peak_demand_hours: [10, 11, 12],
     },
@@ -85,37 +122,131 @@ const generateMockLogisticsData = (): {
       "Adjust scheduling to better match demand patterns",
       "Consider additional truck capacity during peak hours",
     ],
-  }
+  };
 
-  return { trucks, recommendations }
-}
+  return { trucks, recommendations };
+};
 
 export function LogisticsPlanner() {
-  const [activeTab, setActiveTab] = useState("overview")
-  const [logisticsData, setLogisticsData] = useState(generateMockLogisticsData())
-  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const { currentData, error, loading, lastUpdate } = useRealTimeData();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [logisticsData, setLogisticsData] = useState(
+    generateMockLogisticsData()
+  );
+
+  useEffect(() => {
+    if (currentData && !loading) {
+      const firebaseData = {
+        trucks: logisticsData.trucks, // Keep existing trucks data
+        recommendations: currentData.recommendations?.logistics
+          ? {
+              ...currentData.recommendations.logistics,
+              performance_metrics: {
+                ...currentData.recommendations.logistics.performance_metrics,
+                fuel_efficiency: 0.85,
+              },
+            }
+          : logisticsData.recommendations,
+      };
+      setLogisticsData(firebaseData);
+    }
+  }, [currentData, loading]);
+
+  // Update logistics data when Firebase data changes
+  useEffect(() => {
+    if (currentData?.recommendations?.logistics) {
+      const firebaseData = currentData.recommendations.logistics;
+
+      // Generate truck schedules based on Firebase data
+      const trucks = logisticsData.trucks.map((truck, index) => {
+        // Use some Firebase data to influence the truck data
+        const truckNeeded =
+          firebaseData.truck_scheduling.optimal_schedule[
+            new Date().getHours()
+          ] || 0;
+        const isPeakHour =
+          firebaseData.truck_scheduling.peak_demand_hours.includes(
+            new Date().getHours()
+          );
+
+        return {
+          ...truck,
+          status: (index < truckNeeded
+            ? isPeakHour
+              ? "transit"
+              : "loading"
+            : index < truckNeeded + 2
+            ? "idle"
+            : "maintenance") as
+            | "loading"
+            | "transit"
+            | "unloading"
+            | "idle"
+            | "maintenance",
+          eta: isPeakHour ? "30 minutes" : "1 hour",
+          fuel_level: Math.min(100, truck.fuel_level + 10),
+        };
+      });
+
+      setLogisticsData({
+        trucks,
+        recommendations: {
+          truck_scheduling: firebaseData.truck_scheduling,
+          performance_metrics: {
+            ...firebaseData.performance_metrics,
+            fuel_efficiency: 0.85,
+          },
+          improvement_opportunities: firebaseData.improvement_opportunities,
+        },
+      });
+    }
+  }, [currentData]);
 
   const refreshData = () => {
-    setLogisticsData(generateMockLogisticsData())
-    setLastUpdate(new Date())
-  }
+    // With real-time data, this just forces a UI refresh
+    setLogisticsData({ ...logisticsData });
+  };
 
-  const activeTrucks = logisticsData.trucks.filter((truck) => truck.status !== "idle" && truck.status !== "maintenance")
+  const activeTrucks = logisticsData.trucks.filter(
+    (truck) => truck.status !== "idle" && truck.status !== "maintenance"
+  );
   const criticalRoutes = logisticsData.trucks.filter(
-    (truck) => truck.fuel_level < 25 || truck.current_load > truck.load_capacity * 0.9,
-  )
+    (truck) =>
+      truck.fuel_level < 25 || truck.current_load > truck.load_capacity * 0.9
+  );
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center p-6">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <span className="ml-2">Loading logistics data...</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Logistics Planner</h2>
-          <p className="text-muted-foreground">Optimize truck scheduling and route management</p>
+          <h2 className="text-3xl font-bold text-foreground">
+            Logistics Planner
+          </h2>
+          <p className="text-muted-foreground">
+            Optimize truck scheduling and route management
+          </p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm text-muted-foreground">Live Tracking</span>
+            <span className="text-sm text-muted-foreground">
+              Live Tracking | Last updated:{" "}
+              {lastUpdate ? lastUpdate.toLocaleTimeString() : "Never"}
+            </span>
           </div>
           <Button variant="outline" size="sm" onClick={refreshData}>
             <RefreshCw className="mr-2 h-4 w-4" />
@@ -130,8 +261,12 @@ export function LogisticsPlanner() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Trucks</p>
-                <p className="text-2xl font-bold text-foreground">{activeTrucks.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Trucks
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {activeTrucks.length}
+                </p>
               </div>
               <div className="w-3 h-3 bg-green-500 rounded-full" />
             </div>
@@ -141,9 +276,15 @@ export function LogisticsPlanner() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Supply Efficiency</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Supply Efficiency
+                </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {logisticsData.recommendations.performance_metrics.current_supply_efficiency}%
+                  {
+                    logisticsData.recommendations.performance_metrics
+                      .current_supply_efficiency
+                  }
+                  %
                 </p>
               </div>
               <TrendingUp className="h-5 w-5 text-green-600" />
@@ -154,9 +295,15 @@ export function LogisticsPlanner() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Delay</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Avg Delay
+                </p>
                 <p className="text-2xl font-bold text-amber-600">
-                  {logisticsData.recommendations.performance_metrics.average_delay}min
+                  {
+                    logisticsData.recommendations.performance_metrics
+                      .average_delay
+                  }
+                  min
                 </p>
               </div>
               <div className="w-3 h-3 bg-amber-500 rounded-full" />
@@ -167,8 +314,12 @@ export function LogisticsPlanner() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Critical Routes</p>
-                <p className="text-2xl font-bold text-red-600">{criticalRoutes.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Critical Routes
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {criticalRoutes.length}
+                </p>
               </div>
               <Badge variant="destructive" className="text-xs">
                 Attention
@@ -178,7 +329,11 @@ export function LogisticsPlanner() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="map">Live Map</TabsTrigger>
@@ -191,14 +346,16 @@ export function LogisticsPlanner() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <LogisticsMap trucks={logisticsData.trucks} />
-            <PerformanceMetrics recommendations={logisticsData.recommendations} />
+            <LogisticsMap />
+            <PerformanceMetrics
+              recommendations={logisticsData.recommendations}
+            />
           </div>
           <TruckGantt trucks={logisticsData.trucks} />
         </TabsContent>
 
         <TabsContent value="map" className="space-y-6">
-          <LogisticsMap trucks={logisticsData.trucks} fullSize />
+          <LogisticsMap fullSize />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
@@ -212,7 +369,9 @@ export function LogisticsPlanner() {
         <TabsContent value="management" className="space-y-6">
           <TruckManagement
             trucks={logisticsData.trucks}
-            onTruckUpdate={(trucks) => setLogisticsData((prev) => ({ ...prev, trucks }))}
+            onTruckUpdate={(trucks) =>
+              setLogisticsData((prev) => ({ ...prev, trucks }))
+            }
           />
         </TabsContent>
 
@@ -228,5 +387,5 @@ export function LogisticsPlanner() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

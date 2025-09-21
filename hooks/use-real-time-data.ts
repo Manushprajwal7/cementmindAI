@@ -88,170 +88,216 @@ export function useRealTimeData(enabled = true, plantId = "plant-1") {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [currentData, setCurrentData] = useState<AnalysisResult | null>(null);
   const [dataHistory, setDataHistory] = useState<AnalysisResult[]>([]);
-
-  const generateMockData = useCallback((): AnalysisResult => {
-    const now = new Date();
-    const hasAnomaly = Math.random() > 0.8;
-
-    return {
-      timestamp: now.toISOString(),
-      system_status: hasAnomaly ? "warning" : "normal",
-      alerts: hasAnomaly
-        ? [
-            {
-              id: `alert-${Date.now()}`,
-              type: "temperature_anomaly",
-              severity: Math.random() > 0.5 ? "high" : "medium",
-              message: "Kiln temperature deviation detected",
-              anomaly_details: {
-                timestamp: now.toISOString(),
-                confidence: 0.85 + Math.random() * 0.1,
-                affected_sensors: [
-                  {
-                    sensor: "kiln_temperature",
-                    current_value: 1520 + Math.random() * 50,
-                    expected_range: [1450, 1500],
-                    deviation_percent: 5 + Math.random() * 10,
-                  },
-                ],
-                severity: "high",
-                potential_causes: [
-                  "Fuel flow irregularity",
-                  "Air intake blockage",
-                ],
-                recommended_actions: [
-                  "Adjust fuel flow rate",
-                  "Check air intake system",
-                ],
-              },
-            },
-          ]
-        : [],
-      recommendations: {
-        quality_control: {
-          predicted_fineness: 3400 + Math.random() * 100,
-          predicted_setting_time: 180 + Math.random() * 20,
-          predicted_strength: 42 + Math.random() * 3,
-          corrections: {
-            process_adjustments: {
-              kiln_speed: 0.95 + Math.random() * 0.1,
-              air_flow: 1.02 + Math.random() * 0.06,
-            },
-            material_adjustments: {
-              limestone_percent: 78 + Math.random() * 4,
-              clay_percent: 15 + Math.random() * 2,
-            },
-            estimated_impact: {
-              quality_improvement: 2 + Math.random() * 3,
-              energy_savings: 1 + Math.random() * 2,
-            },
-          },
-        },
-        logistics: {
-          truck_scheduling: {
-            predicted_demand: Array.from(
-              { length: 48 },
-              () => 15 + Math.random() * 10
-            ),
-            optimal_schedule: Object.fromEntries(
-              Array.from({ length: 24 }, (_, i) => [
-                i,
-                Math.floor(2 + Math.random() * 4),
-              ])
-            ),
-            total_trucks_needed: 12 + Math.floor(Math.random() * 6),
-            peak_demand_hours: [8, 9, 14, 15, 16],
-          },
-          performance_metrics: {
-            current_supply_efficiency: 92 + Math.random() * 6,
-            inventory_turnover: 4.2 + Math.random() * 0.8,
-            average_delay: 15 + Math.random() * 10,
-          },
-          improvement_opportunities: [
-            "Optimize route scheduling during peak hours",
-            "Implement predictive maintenance for trucks",
-          ],
-        },
-      },
-      performance_metrics: {
-        energy_efficiency: 85 + Math.random() * 10,
-        material_flow_rate: 240 + Math.random() * 20,
-        system_pressure: 4.0 + Math.random() * 0.8,
-        kiln_temperature: 1450 + Math.random() * 100,
-        quality_score: 90 + Math.random() * 8,
-        anomaly_confidence: Math.random() * 0.3,
-      },
-    };
-  }, []);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!enabled) {
       setConnectionStatus("disconnected");
+      setLoading(false);
       return;
     }
 
+    let connectionTimeout: NodeJS.Timeout | null = null;
     setConnectionStatus("connecting");
+    setLoading(true);
+    setError(null);
+
+    // Set a connection timeout
+    connectionTimeout = setTimeout(() => {
+      if (connectionStatus === "connecting") {
+        setError("Connection timeout: Unable to connect to Firebase database");
+        setConnectionStatus("disconnected");
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
 
     const db = getRealtimeDb();
-    if (db) {
-      const dataPath = `plants/${plantId}/analysis`;
-      const recentQuery = query(ref(db, dataPath), limitToLast(100));
+    if (!db) {
+      setError("Failed to initialize Firebase Realtime Database");
+      setConnectionStatus("disconnected");
+      setLoading(false);
+      if (connectionTimeout) clearTimeout(connectionTimeout);
+      return;
+    }
 
-      const unsub = onValue(recentQuery, (snapshot) => {
-        const items: AnalysisResult[] = [];
+    try {
+      // Define paths for different data types
+      const telemetryPath = `plants/${plantId}/telemetry`;
+      const alertsPath = `plants/${plantId}/alerts`;
+      const analysisPath = `plants/${plantId}/analysis`;
+      
+      // Check database connection
+      const connectedRef = ref(db, '.info/connected');
+      const connectedUnsub = onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          setConnectionStatus("connected");
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+            connectionTimeout = null;
+          }
+        } else {
+          setConnectionStatus("disconnected");
+        }
+      });
+      
+      // Query for the most recent 100 entries
+      const telemetryQuery = query(ref(db, telemetryPath), limitToLast(100));
+      const alertsQuery = query(ref(db, alertsPath), limitToLast(20));
+      const analysisQuery = query(ref(db, analysisPath), limitToLast(1));
+
+      // Subscribe to telemetry data
+      const telemetryUnsub = onValue(telemetryQuery, (snapshot) => {
+        const telemetryData: SensorReading[] = [];
         snapshot.forEach((child) => {
-          const val = child.val() as AnalysisResult;
-          items.push(val);
+          const val = child.val() as SensorReading;
+          telemetryData.push(val);
         });
-        if (items.length > 0) {
-          const latest = items[items.length - 1];
-          setCurrentData(latest);
-          setDataHistory(items);
+        
+        // Update state with telemetry data
+        if (telemetryData.length > 0) {
           setLastUpdate(new Date());
         }
-        setConnectionStatus("connected");
+      }, (error) => {
+        console.error("Error fetching telemetry data:", error);
+        setError(`Error fetching telemetry data: ${error.message}`);
       });
 
-      // Also push mock data if running without a backend writer
-      const writerInterval = setInterval(() => {
-        const newData = generateMockData();
-        const listRef = ref(db, dataPath);
-        const newRef = push(listRef);
-        set(newRef, newData);
-      }, 3000);
+      // Subscribe to alerts data
+      const alertsUnsub = onValue(alertsQuery, (snapshot) => {
+        const alertsData: AnalysisResult["alerts"] = [];
+        snapshot.forEach((child) => {
+          const val = child.val();
+          alertsData.push(val);
+        });
+      }, (error) => {
+        console.error("Error fetching alerts data:", error);
+        setError(`Error fetching alerts data: ${error.message}`);
+      });
 
-      return () => {
-        unsub();
-        clearInterval(writerInterval);
-        setConnectionStatus("disconnected");
-      };
-    } else {
-      const connectTimeout = setTimeout(() => {
-        setConnectionStatus("connected");
-        console.log(`[v0] Connected (mock) for plant: ${plantId}`);
-      }, 500);
-
-      const dataInterval = setInterval(() => {
-        if (enabled) {
-          const newData = generateMockData();
-          setCurrentData(newData);
+      // Subscribe to analysis data
+      const analysisUnsub = onValue(analysisQuery, (snapshot) => {
+        const analysisData: AnalysisResult[] = [];
+        snapshot.forEach((child) => {
+          const val = child.val() as AnalysisResult;
+          analysisData.push(val);
+        });
+        
+        if (analysisData.length > 0) {
+          const latest = analysisData[analysisData.length - 1];
+          setCurrentData(latest);
+          setDataHistory((prev) => {
+            // Add new data to history, keeping only the last 100 entries
+            const newHistory = [...prev, latest];
+            return newHistory.slice(-100);
+          });
           setLastUpdate(new Date());
-          setDataHistory((prev) => [...prev.slice(-99), newData]);
         }
-      }, 2000);
+        
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching analysis data:", error);
+        setError(`Error fetching analysis data: ${error.message}`);
+        setLoading(false);
+      });
 
       return () => {
-        clearTimeout(connectTimeout);
-        clearInterval(dataInterval);
+        // Clean up subscriptions
+        if (connectionTimeout) clearTimeout(connectionTimeout);
+        connectedUnsub();
+        telemetryUnsub();
+        alertsUnsub();
+        analysisUnsub();
         setConnectionStatus("disconnected");
       };
+    } catch (err: any) {
+      console.error("Error setting up Firebase listeners:", err);
+      setError(`Failed to connect to Firebase: ${err?.message || 'Unknown error'}`);
+      setConnectionStatus("disconnected");
+      setLoading(false);
+      if (connectionTimeout) clearTimeout(connectionTimeout);
     }
-  }, [enabled, plantId, generateMockData]);
+  }, [enabled, plantId]);
 
   return {
     connectionStatus,
     lastUpdate,
     currentData,
     dataHistory,
+    error,
+    loading,
   };
+}
+
+// Hook for getting chart data for a specific metric
+export function useRealtimeChartData(metricKey: string, dataPoints: number = 24) {
+  const [chartData, setChartData] = useState<any[]>([]);
+  
+  // Always generate mock data immediately for all metrics
+  useEffect(() => {
+    // Generate mock data for immediate display
+    const mockData = generateMockData(metricKey, dataPoints);
+    setChartData(mockData);
+    
+    // Set up an interval to refresh the data every 5 seconds to simulate real-time updates
+    const intervalId = setInterval(() => {
+      const updatedMockData = generateMockData(metricKey, dataPoints);
+      setChartData(updatedMockData);
+    }, 5000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [metricKey, dataPoints]);
+
+  return chartData;
+}
+
+// Helper function to generate mock data for charts
+function generateMockData(metricKey: string, dataPoints: number) {
+  const now = Date.now();
+  const data: any[] = [];
+  
+  // Base values for different metrics - expanded to include all possible metrics
+  const baseValues: Record<string, {base: number, amplitude: number}> = {
+    kiln_temperature: { base: 1450, amplitude: 50 },
+    kiln_temperature_live: { base: 1450, amplitude: 50 },
+    system_pressure: { base: 4.2, amplitude: 0.5 },
+    system_pressure_live: { base: 4.2, amplitude: 0.5 },
+    material_flow_rate: { base: 245, amplitude: 15 },
+    material_flow: { base: 245, amplitude: 15 },
+    material_flow_energy: { base: 245, amplitude: 25 },
+    oxygen_level: { base: 21, amplitude: 2 },
+    energy_consumption: { base: 85, amplitude: 10 },
+    quality_score: { base: 92, amplitude: 3 },
+    system_performance: { base: 88, amplitude: 12 },
+    efficiency_score: { base: 91, amplitude: 5 },
+    production_rate: { base: 120, amplitude: 15 },
+    maintenance_score: { base: 87, amplitude: 8 }
+  };
+
+  // Default config if metric not found - ensures we always have data
+  const config = baseValues[metricKey] || { base: 100, amplitude: 20 };
+  
+  // Always generate data points regardless of the metric
+  for (let i = 0; i < dataPoints; i++) {
+    const timestamp = now - (dataPoints - i - 1) * 5 * 60 * 1000; // 5-minute intervals
+    
+    // More complex pattern with randomness for realistic data
+    const trend = Math.sin(i * 0.5) * config.amplitude * 0.8;
+    const noise = (Math.random() - 0.5) * config.amplitude * 0.7;
+    const spike = i % 8 === 0 ? (Math.random() > 0.7 ? config.amplitude * 0.6 : 0) : 0; // Occasional spikes
+    
+    // Ensure value is positive and within reasonable range
+    let value = config.base + trend + noise + spike;
+    value = Math.max(0, value); // Ensure no negative values
+    
+    data.push({
+      timestamp,
+      time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      value: Number(value.toFixed(2)),
+    });
+  }
+  
+  return data;
 }

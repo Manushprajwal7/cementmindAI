@@ -1,15 +1,46 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
 
 interface GaugeChartProps {
   title: string
-  value: number
+  value?: number
   max: number
   unit: string
 }
 
-export function GaugeChart({ title, value, max, unit }: GaugeChartProps) {
+export function GaugeChart({ title, value: initialValue, max, unit }: GaugeChartProps) {
+  // Use state to manage the value with random changes
+  const [value, setValue] = useState(initialValue || Math.random() * max * 0.8 + max * 0.1)
+  
+  // Update value randomly every few seconds to simulate real-time data
+  useEffect(() => {
+    // Comment out real-time data fetching code
+    /*
+    // This would be the code to fetch real-time data from an API
+    const fetchRealTimeData = async () => {
+      try {
+        const response = await fetch(`/api/telemetry/gauge/${title}`);
+        const data = await response.json();
+        setValue(data.value);
+      } catch (error) {
+        console.error('Failed to fetch real-time data:', error);
+      }
+    };
+    */
+    
+    // Instead, use random data generation
+    const interval = setInterval(() => {
+      // Generate a random value that's somewhat close to the previous value
+      const randomChange = (Math.random() - 0.5) * (max * 0.1)
+      const newValue = Math.max(0, Math.min(max, value + randomChange))
+      setValue(newValue)
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [title, max, value])
+  
   const percentage = (value / max) * 100
   const strokeDasharray = 2 * Math.PI * 45 // Circumference for radius 45
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100

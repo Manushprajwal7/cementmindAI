@@ -1,24 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Bell, Settings, User, ChevronDown } from "lucide-react"
-import { NotificationPanel } from "./notification-panel"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Settings, User, ChevronDown, Bot } from "lucide-react";
+import { NotificationPanel } from "./notification-panel";
+import { GeminiChat } from "./gemini-chat";
 
 export function TopNav() {
-  const [selectedPlant, setSelectedPlant] = useState("plant-1")
-  const [timeRange, setTimeRange] = useState("live")
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [selectedPlant, setSelectedPlant] = useState("plant-1");
+  const [timeRange, setTimeRange] = useState("live");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showGeminiChat, setShowGeminiChat] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-6 z-50">
       <div className="flex items-center space-x-6">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">CM</span>
+            <span className="text-primary-foreground font-bold text-sm">
+              CM
+            </span>
           </div>
           <h1 className="text-xl font-bold text-foreground">CementMind AI</h1>
         </div>
@@ -36,6 +51,15 @@ export function TopNav() {
       </div>
 
       <div className="flex items-center space-x-4">
+        <Button
+          variant="outline"
+          onClick={() => setShowGeminiChat(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
+        >
+          <Bot className="h-4 w-4" />
+          <span className="hidden sm:inline">Ask Gemini</span>
+        </Button>
+
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -50,7 +74,10 @@ export function TopNav() {
           </SelectContent>
         </Select>
 
-        <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+        <DropdownMenu
+          open={showNotifications}
+          onOpenChange={setShowNotifications}
+        >
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
@@ -68,7 +95,7 @@ export function TopNav() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <User className="h-5 w-5" />
-              <span>J. Smith</span>
+              <span>Sachin</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -84,6 +111,11 @@ export function TopNav() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <GeminiChat
+        isOpen={showGeminiChat}
+        onClose={() => setShowGeminiChat(false)}
+      />
     </header>
-  )
+  );
 }

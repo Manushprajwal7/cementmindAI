@@ -1,9 +1,10 @@
-import { ReportsCenter } from "@/components/reports/reports-center"
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { ReportsCenter } from "@/components/reports/reports-center";
 
 export default function ReportsPage() {
   return (
-    <div className="p-6">
+    <DashboardLayout>
       <ReportsCenter />
-    </div>
-  )
+    </DashboardLayout>
+  );
 }

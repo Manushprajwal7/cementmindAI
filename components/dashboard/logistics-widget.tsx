@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Truck, MapPin, Clock, ArrowRight } from "lucide-react"
-
+import Link from "next/link"
 interface TruckSchedule {
   id: string
   truckNumber: string
@@ -54,7 +54,9 @@ export function LogisticsWidget() {
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-lg font-semibold">Logistics Overview</CardTitle>
         <Button variant="outline" size="sm">
+          <Link href="/logistics">
           View Full Schedule
+          </Link>
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </CardHeader>
@@ -65,7 +67,7 @@ export function LogisticsWidget() {
             <div className="text-sm text-muted-foreground">Active Trucks</div>
           </div>
           <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-bold text-secondary">2.4h</div>
+            <div className="text-2xl font-bold text-primary">2.4h</div>
             <div className="text-sm text-muted-foreground">Avg Delivery</div>
           </div>
         </div>

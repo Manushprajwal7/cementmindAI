@@ -27,7 +27,7 @@ interface DriverMetrics {
 const mockDriverMetrics: DriverMetrics[] = [
   {
     id: "1",
-    name: "John Smith",
+    name: "Virat",
     truckNumber: "T-001",
     hoursWorked: 42,
     deliveriesCompleted: 28,
@@ -41,7 +41,7 @@ const mockDriverMetrics: DriverMetrics[] = [
   },
   {
     id: "2",
-    name: "Maria Garcia",
+    name: "Yuvaraj",
     truckNumber: "T-002",
     hoursWorked: 38,
     deliveriesCompleted: 24,
@@ -55,7 +55,7 @@ const mockDriverMetrics: DriverMetrics[] = [
   },
   {
     id: "3",
-    name: "Robert Johnson",
+    name: "Rishab",
     truckNumber: "T-003",
     hoursWorked: 45,
     deliveriesCompleted: 31,
@@ -226,14 +226,15 @@ export function DriverPerformance({ trucks }: DriverPerformanceProps) {
                     </div>
                     <Progress value={(driver.onTimeDeliveries / driver.totalDeliveries) * 100} className="w-full" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                  <div className="flex flex-col gap-2">
+                    <Button size="sm" variant="outline" className="bg-transparent w-full">
                       View Details
                     </Button>
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1">
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 w-full">
                       Send Message
                     </Button>
                   </div>
+
                 </CardContent>
               </Card>
             ))}

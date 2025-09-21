@@ -1,17 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, Download, FileText, Plus, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { ReportTemplate, GeneratedReport } from "@/types/reports"
-import { ScheduledReports } from "./scheduled-reports"
-import { CustomReportBuilder } from "./custom-report-builder"
-import { ReportSharing } from "./report-sharing"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Calendar,
+  Download,
+  FileText,
+  Plus,
+  Search,
+  RefreshCw,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { ReportTemplate, GeneratedReport } from "@/types/reports";
+import { ScheduledReports } from "./scheduled-reports";
+import { CustomReportBuilder } from "./custom-report-builder";
+import { ReportSharing } from "./report-sharing";
+import { useRealTimeData } from "@/hooks/use-real-time-data";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const reportTemplates: ReportTemplate[] = [
   {
@@ -48,7 +70,7 @@ const reportTemplates: ReportTemplate[] = [
     frequency: "monthly",
     format: "excel",
   },
-]
+];
 
 const recentReports: GeneratedReport[] = [
   {
@@ -78,34 +100,55 @@ const recentReports: GeneratedReport[] = [
     downloadUrl: "#",
     status: "ready",
   },
-]
+];
 
 export function ReportsCenter() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const { currentData, error, loading, lastUpdate } = useRealTimeData();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [reportData, setReportData] = useState({
+    templates: reportTemplates,
+    generatedReports: recentReports,
+    analytics: {},
+  });
+
+  useEffect(() => {
+    if (currentData && !loading) {
+      setReportData({
+        templates: reportTemplates,
+        generatedReports: recentReports,
+        analytics: {},
+      });
+    }
+  }, [currentData, loading]);
 
   const filteredTemplates = reportTemplates.filter((template) => {
-    const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === "all" || template.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+    const matchesSearch = template.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || template.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const handleGenerateReport = (templateId: string) => {
-    console.log("[v0] Generating report for template:", templateId)
+    console.log("[v0] Generating report for template:", templateId);
     // Simulate report generation
-  }
+  };
 
   const handleDownloadReport = (reportId: string) => {
-    console.log("[v0] Downloading report:", reportId)
+    console.log("[v0] Downloading report:", reportId);
     // Simulate download
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reports & Export</h1>
-          <p className="text-gray-600 mt-1">Generate and download production reports</p>
+          <p className="text-gray-600 mt-1">
+            Generate and download production reports
+          </p>
         </div>
         <Button className="bg-red-600 hover:bg-red-700">
           <Plus className="w-4 h-4 mr-2" />
@@ -133,7 +176,10 @@ export function ReportsCenter() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
@@ -149,7 +195,10 @@ export function ReportsCenter() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTemplates.map((template) => (
-              <Card key={template.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={template.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
@@ -194,11 +243,19 @@ export function ReportsCenter() {
                     <div className="space-y-1">
                       <h3 className="font-semibold">{report.name}</h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>Generated: {report.generatedAt.toLocaleString()}</span>
+                        <span>
+                          Generated: {report.generatedAt.toLocaleString()}
+                        </span>
                         <span>Size: {report.size}</span>
                         <Badge
-                          variant={report.status === "ready" ? "default" : "secondary"}
-                          className={report.status === "ready" ? "bg-green-100 text-green-800" : ""}
+                          variant={
+                            report.status === "ready" ? "default" : "secondary"
+                          }
+                          className={
+                            report.status === "ready"
+                              ? "bg-green-100 text-green-800"
+                              : ""
+                          }
                         >
                           {report.status}
                         </Badge>
@@ -232,5 +289,5 @@ export function ReportsCenter() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
