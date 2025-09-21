@@ -1,4 +1,5 @@
-# CementMind AI - Cement Manufacturing Intelligence Platform
+
+# CementMind AI- An AI Operating Workbench For  Raw Material and  Logistics Automation  with   Autonomous Real-Time Cement Quality Detection and Correction
 
 CementMind AI is a comprehensive industrial IoT platform designed specifically for cement manufacturing plants. It leverages Google's cutting-edge technologies including Gemini AI, Firebase, BigQuery, and Cloud Vision to provide real-time monitoring, predictive analytics, and intelligent insights for cement production processes.
 
@@ -68,7 +69,7 @@ CementMind AI is a comprehensive industrial IoT platform designed specifically f
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/cementmind-ai.git
+   git clone https://github.com/Manushprajwal7/cementmindAI
    cd cementmind-ai
    ```
 
@@ -182,9 +183,7 @@ The application features a powerful AI assistant powered by Google's Gemini. To 
 - Write meaningful commit messages
 - Create pull requests for all changes
 
-## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -195,4 +194,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-For inquiries, please contact [your-email@example.com](mailto:your-email@example.com)
+For inquiries, please contact [your-email@example.com](mailto:manushprajwal555@gmail.com)
