@@ -57,7 +57,7 @@ async function handleApiKeyRequest(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { prompt, system, model = "gemini-1.5-flash-002" } = body || {};
+    const { prompt, system, model = "gemini-2.5-flash" } = body || {};
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Missing prompt" }), {
@@ -108,4 +108,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

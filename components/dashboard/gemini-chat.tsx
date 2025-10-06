@@ -89,7 +89,7 @@ export function GeminiChat({
           prompt: currentInput,
           system:
             "You are Gemini, an AI assistant for CementMind, a cement manufacturing monitoring system. Help users with questions about cement production, quality control, logistics, telemetry data, and system operations. Be helpful, accurate, and concise.",
-          model: "gemini-1.5-flash-002", // Specify the model explicitly
+          model: "gemini-2.5-flash", // Updated from gemini-1.5-flash-002
         }),
       });
 
@@ -99,7 +99,9 @@ export function GeminiChat({
       if (!response.ok) {
         const errorData = await response.json();
         console.error("API error:", errorData);
-        throw new Error(`Failed to get response from Gemini: ${response.status}`);
+        throw new Error(
+          `Failed to get response from Gemini: ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -117,7 +119,8 @@ export function GeminiChat({
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again. If this persists, check your API configuration.",
+        content:
+          "Sorry, I encountered an error. Please try again. If this persists, check your API configuration.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
