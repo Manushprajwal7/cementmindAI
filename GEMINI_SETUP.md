@@ -60,6 +60,7 @@ For this option, you'll need:
 1. **"Missing configuration" error**: Make sure you've set up the environment variables correctly
 2. **API key errors**: Verify your API key is valid and has the necessary permissions
 3. **Network errors**: Check your internet connection and firewall settings
+4. **Model not found errors**: The application now uses gemini-2.5-flash by default, which is the latest stable model. If you encounter model-related errors, ensure your API key has access to this model.
 
 ### Testing the Integration
 
