@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
   User,
 } from "firebase/auth";
 
@@ -57,6 +58,32 @@ export interface Report {
   downloadUrl?: string;
 }
 
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+  status: string;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  photoURL?: string;
+  phoneNumber?: string;
+  company?: string;
+  department?: string;
+  position?: string;
+  preferences: {
+    theme: string;
+    notifications: boolean;
+    language: string;
+  };
+  metadata: {
+    creationTime: string;
+    lastSignInTime: string;
+  };
+}
+
 export interface UserSettings {
   id: string;
   email: string;
@@ -68,14 +95,55 @@ export interface UserSettings {
 // Custom hooks for Firebase operations
 export function useFirebaseAuth() {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
     if (!auth) return;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+
+      if (user) {
+        // Fetch user profile from API
+        try {
+          const response = await fetch(`/api/firebase/auth`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "get_user_profile",
+              data: { uid: user.uid },
+            }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setUserProfile(result.profile);
+
+              // Update last login time
+              await fetch(`/api/firebase/auth`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  type: "update_last_login",
+                  data: { uid: user.uid },
+                }),
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      } else {
+        setUserProfile(null);
+      }
+
       setLoading(false);
     });
 
@@ -100,6 +168,12 @@ export function useFirebaseAuth() {
         email,
         password
       );
+
+      // Update display name if provided
+      if (displayName && result.user) {
+        await updateProfile(result.user, { displayName });
+      }
+
       return result.user;
     },
     []
@@ -112,7 +186,52 @@ export function useFirebaseAuth() {
     await signOut(auth);
   }, []);
 
-  return { user, loading, signIn, signUp, logout };
+  const updateUserProfile = useCallback(
+    async (uid: string, profileData: Partial<UserProfile>) => {
+      try {
+        const response = await fetch(`/api/firebase/auth`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "update_user",
+            data: { uid, ...profileData },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update user profile");
+        }
+
+        const result = await response.json();
+
+        // Update local profile state if successful
+        if (result.success && userProfile) {
+          setUserProfile({
+            ...userProfile,
+            ...profileData,
+          });
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
+      }
+    },
+    [userProfile]
+  );
+
+  return {
+    user,
+    userProfile,
+    loading,
+    signIn,
+    signUp,
+    logout,
+    updateUserProfile,
+  };
 }
 
 export function useFirebaseData<T>(
@@ -129,7 +248,7 @@ export function useFirebaseData<T>(
       setError(null);
 
       const searchParams = new URLSearchParams();
-      
+
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined) {

@@ -7,16 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { Loader2, LogIn, UserPlus, User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function FirebaseAuth() {
-  const { user, loading, signIn, signUp, logout } = useFirebaseAuth();
+  const { user, loading, signIn, signUp } = useFirebaseAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +28,8 @@ export function FirebaseAuth() {
 
     try {
       await signIn(email, password);
+      // Redirect to profile page after successful sign-in
+      router.push("/profile");
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
     } finally {
@@ -39,18 +44,12 @@ export function FirebaseAuth() {
 
     try {
       await signUp(email, password, displayName);
+      // Redirect to profile page after successful sign-up
+      router.push("/profile");
     } catch (err: any) {
       setError(err.message || "Failed to sign up");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (err: any) {
-      setError(err.message || "Failed to logout");
     }
   };
 
@@ -93,10 +92,11 @@ export function FirebaseAuth() {
               {user.uid}
             </div>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="w-full">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex flex-col space-y-2">
+            <Button asChild>
+              <Link href="/profile">View Profile</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -105,91 +105,114 @@ export function FirebaseAuth() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Firebase Authentication</CardTitle>
+        <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+        {isSignUp ? (
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup-name">Display Name</Label>
+              <Input
+                id="signup-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4 mr-2" />
+              )}
+              Sign Up
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signin-email">Email</Label>
+              <Input
+                id="signin-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signin-password">Password</Label>
+              <Input
+                id="signin-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <LogIn className="h-4 w-4 mr-2" />
+              )}
+              Sign In
+            </Button>
+          </form>
+        )}
 
-          <TabsContent value="signin" className="space-y-4">
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signin-email">Email</Label>
-                <Input
-                  id="signin-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signin-password">Password</Label>
-                <Input
-                  id="signin-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <LogIn className="h-4 w-4 mr-2" />
-                )}
-                Sign In
+        <div className="mt-4 text-center">
+          {isSignUp ? (
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Button
+                variant="link"
+                className="p-0 h-auto text-blue-600 hover:underline"
+                onClick={() => {
+                  setIsSignUp(false);
+                  setError("");
+                }}
+              >
+                Sign in
               </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="signup" className="space-y-4">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">Display Name</Label>
-                <Input
-                  id="signup-name"
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <UserPlus className="h-4 w-4 mr-2" />
-                )}
-                Sign Up
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Button
+                variant="link"
+                className="p-0 h-auto text-blue-600 hover:underline"
+                onClick={() => {
+                  setIsSignUp(true);
+                  setError("");
+                }}
+              >
+                Sign up
               </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+            </p>
+          )}
+        </div>
 
         {error && (
           <Alert className="mt-4">

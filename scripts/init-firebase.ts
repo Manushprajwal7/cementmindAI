@@ -6,59 +6,93 @@
  * Run with: npx ts-node scripts/init-firebase.ts
  */
 
-import * as admin from 'firebase-admin';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
+import * as admin from "firebase-admin";
+import { getApps, initializeApp, cert } from "firebase-admin/app";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // Log environment variables for debugging
-console.log('Environment variables being used:');
-console.log('NEXT_PUBLIC_FIREBASE_PROJECT_ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? '✅ Found' : '❌ Missing');
-console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY ? '✅ Found' : '❌ Missing');
-console.log('FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL ? '✅ Found' : '❌ Missing');
-console.log('FIREBASE_CLIENT_ID:', process.env.FIREBASE_CLIENT_ID ? '✅ Found' : '❌ Missing');
-console.log('NEXT_PUBLIC_FIREBASE_DATABASE_URL:', process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ? '✅ Found' : '❌ Missing');
+console.log("Environment variables being used:");
+console.log(
+  "NEXT_PUBLIC_FIREBASE_PROJECT_ID:",
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "✅ Found" : "❌ Missing"
+);
+console.log(
+  "FIREBASE_PRIVATE_KEY:",
+  process.env.FIREBASE_PRIVATE_KEY ? "✅ Found" : "❌ Missing"
+);
+console.log(
+  "FIREBASE_CLIENT_EMAIL:",
+  process.env.FIREBASE_CLIENT_EMAIL ? "✅ Found" : "❌ Missing"
+);
+console.log(
+  "FIREBASE_CLIENT_ID:",
+  process.env.FIREBASE_CLIENT_ID ? "✅ Found" : "❌ Missing"
+);
+console.log(
+  "NEXT_PUBLIC_FIREBASE_DATABASE_URL:",
+  process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ? "✅ Found" : "❌ Missing"
+);
 
 // Initialize Firebase Admin SDK with service account
 const serviceAccount = {
-  type: 'service_account',
-  project_id: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  type: "service_account",
+  project_id:
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+    process.env.FIREBASE_PROJECT_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
   client_email: process.env.FIREBASE_CLIENT_EMAIL,
   client_id: process.env.FIREBASE_CLIENT_ID,
-  auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-  token_uri: 'https://oauth2.googleapis.com/token',
-  auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-  client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${process.env.FIREBASE_CLIENT_EMAIL?.replace('@', '%40')}`,
-  universe_domain: 'googleapis.com'
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${process.env.FIREBASE_CLIENT_EMAIL?.replace(
+    "@",
+    "%40"
+  )}`,
+  universe_domain: "googleapis.com",
 };
 
 // Verify required environment variables
 const requiredEnvVars = [
-  'FIREBASE_PRIVATE_KEY',
-  'FIREBASE_CLIENT_EMAIL',
-  'FIREBASE_CLIENT_ID'
+  "FIREBASE_PRIVATE_KEY",
+  "FIREBASE_CLIENT_EMAIL",
+  "FIREBASE_CLIENT_ID",
 ];
 
 // Check for project ID (either version is acceptable)
-if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && !process.env.FIREBASE_PROJECT_ID) {
-  console.error('❌ Missing required environment variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID or FIREBASE_PROJECT_ID');
+if (
+  !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+  !process.env.FIREBASE_PROJECT_ID
+) {
+  console.error(
+    "❌ Missing required environment variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID or FIREBASE_PROJECT_ID"
+  );
   process.exit(1);
 }
 
 // Check for database URL (only required if using Realtime Database)
 if (!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL) {
-  console.warn('⚠️ NEXT_PUBLIC_FIREBASE_DATABASE_URL not set. Some features may not work as expected.');
+  console.warn(
+    "⚠️ NEXT_PUBLIC_FIREBASE_DATABASE_URL not set. Some features may not work as expected."
+  );
 }
 
 // Check for missing required variables
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 if (missingVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingVars.join(', '));
-  console.log('\nPlease make sure your .env file contains all required variables:');
-  console.log('NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id');
+  console.error(
+    "❌ Missing required environment variables:",
+    missingVars.join(", ")
+  );
+  console.log(
+    "\nPlease make sure your .env file contains all required variables:"
+  );
+  console.log("NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id");
   console.log('FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\\n..."');
-  console.log('FIREBASE_CLIENT_EMAIL=your-service-account@project-id.iam.gserviceaccount.com');
-  console.log('FIREBASE_CLIENT_ID=your-client-id');
+  console.log(
+    "FIREBASE_CLIENT_EMAIL=your-service-account@project-id.iam.gserviceaccount.com"
+  );
+  console.log("FIREBASE_CLIENT_ID=your-client-id");
   process.exit(1);
 }
 
@@ -67,14 +101,14 @@ try {
   if (getApps().length === 0) {
     app = initializeApp({
       credential: cert(serviceAccount as admin.ServiceAccount),
-      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     });
-    console.log('✅ Firebase Admin initialized successfully');
+    console.log("✅ Firebase Admin initialized successfully");
   } else {
     app = getApps()[0];
   }
 } catch (error) {
-  console.error('❌ Error initializing Firebase Admin:', error);
+  console.error("❌ Error initializing Firebase Admin:", error);
   throw error;
 }
 
@@ -95,77 +129,20 @@ async function initializeCollections() {
     });
 
     // Initialize Alert Thresholds
-    const alertThresholds = [
-      { sensorType: "temperature", min: 20, max: 80, unit: "°C" },
-      { sensorType: "pressure", min: 0, max: 100, unit: "PSI" },
-      { sensorType: "humidity", min: 30, max: 70, unit: "%" },
-      { sensorType: "vibration", min: 0, max: 5, unit: "g" },
+    const thresholds = [
+      { parameter: "temperature", min: 100, max: 200, unit: "°C" },
+      { parameter: "pressure", min: 50, max: 150, unit: "psi" },
+      { parameter: "flow_rate", min: 1000, max: 2000, unit: "L/min" },
+      { parameter: "vibration", min: 0, max: 10, unit: "mm/s" },
     ];
 
-    const batch = db.batch();
-    const thresholdsRef = db.collection("alert_thresholds");
-    
-    for (const threshold of alertThresholds) {
-      const docRef = thresholdsRef.doc(threshold.sensorType);
-      batch.set(docRef, {
-        ...threshold,
-        createdAt: serverTimestamp(),
-      });
-    }
-
-    // Initialize Sensor Configurations
-    const sensorConfigs = [
-      {
-        id: "temp_001",
-        type: "temperature",
-        location: "Kiln 1",
-        status: "active",
-      },
-      {
-        id: "press_001",
-        type: "pressure",
-        location: "Compressor 1",
-        status: "active",
-      },
-      {
-        id: "humid_001",
-        type: "humidity",
-        location: "Storage Area",
-        status: "active",
-      },
-      {
-        id: "vib_001",
-        type: "vibration",
-        location: "Motor 1",
-        status: "active",
-      },
-    ];
-
-    for (const config of sensorConfigs) {
+    for (const threshold of thresholds) {
       await db
-        .collection("sensor_configurations")
-        .doc(config.id)
+        .collection("alert_thresholds")
+        .doc(threshold.parameter)
         .set({
-          ...config,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-    }
-
-    // Initialize Quality Standards
-    const qualityStandards = [
-      { parameter: "compressive_strength", min: 25, max: 50, unit: "MPa" },
-      { parameter: "slump", min: 75, max: 150, unit: "mm" },
-      { parameter: "air_content", min: 3, max: 6, unit: "%" },
-      { parameter: "temperature", min: 15, max: 30, unit: "°C" },
-    ];
-
-    for (const standard of qualityStandards) {
-      await db
-        .collection("quality_standards")
-        .doc(standard.parameter)
-        .set({
-          ...standard,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...threshold,
+          createdAt: serverTimestamp(),
         });
     }
 
@@ -184,7 +161,7 @@ async function initializeCollections() {
     for (const template of reportTemplates) {
       await db.collection("report_templates").add({
         ...template,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
     }
 
@@ -206,7 +183,7 @@ async function initializeCollections() {
         .doc(setting.key)
         .set({
           ...setting,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
     }
 
@@ -227,7 +204,7 @@ async function initializeCollections() {
         .doc(role.name)
         .set({
           ...role,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
         });
     }
 
@@ -255,7 +232,7 @@ async function initializeCollections() {
         .doc(integration.name.toLowerCase().replace(" ", "_"))
         .set({
           ...integration,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
         });
     }
 
@@ -263,15 +240,14 @@ async function initializeCollections() {
     console.log("📊 Collections created:");
     console.log("  - dashboard_metrics");
     console.log("  - alert_thresholds");
-    console.log("  - sensor_configurations");
-    console.log("  - quality_standards");
     console.log("  - report_templates");
     console.log("  - system_settings");
     console.log("  - user_roles");
     console.log("  - integrations");
+    console.log("  - users (will be created on signup)");
   } catch (error) {
-    console.error("❌ Error initializing Firebase collections:", error);
-    process.exit(1);
+    console.error("❌ Error initializing collections:", error);
+    throw error;
   }
 }
 
