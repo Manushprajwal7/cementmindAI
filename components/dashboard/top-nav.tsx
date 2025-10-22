@@ -16,15 +16,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Settings, User, ChevronDown, Bot } from "lucide-react";
+import { Bell, Settings, User, ChevronDown, Bot, LogOut } from "lucide-react";
 import { NotificationPanel } from "./notification-panel";
 import { GeminiChat } from "./gemini-chat";
+import { useFirebaseAuth } from "@/hooks/use-firebase";
+import { useRouter } from "next/navigation";
 
 export function TopNav() {
   const [selectedPlant, setSelectedPlant] = useState("plant-1");
   const [timeRange, setTimeRange] = useState("live");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showGeminiChat, setShowGeminiChat] = useState(false);
+  const { user, logout } = useFirebaseAuth();
+  const router = useRouter();
+
+  const handleProfileClick = () => {
+    router.push("/profile");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/landing");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  // Get user display name or email
+  const getUserDisplayName = () => {
+    if (user?.displayName) {
+      return user.displayName;
+    }
+    if (user?.email) {
+      return user.email.split("@")[0];
+    }
+    return "User";
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-6 z-50">
@@ -95,18 +123,22 @@ export function TopNav() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <User className="h-5 w-5" />
-              <span>Sachin</span>
+              <span>{getUserDisplayName()}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleProfileClick}>
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Profile
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

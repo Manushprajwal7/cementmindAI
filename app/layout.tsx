@@ -1,38 +1,32 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import { DM_Sans } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { Suspense } from "react"
-import { AccessibilityProvider } from "@/components/accessibility/accessibility-provider"
-import "./globals.css"
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "600", "700"],
-})
+import type { Metadata } from "next";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AccessibilityProvider } from "@/components/accessibility/accessibility-provider";
 
 export const metadata: Metadata = {
-  title: "CementMind AI Dashboard",
-  description: "Industrial cement plant monitoring and control system",
-  generator: "v0.app",
-}
+  title: "CementMind AI",
+  description: "Intelligent cement plant monitoring and optimization",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${dmSans.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans">
         <AccessibilityProvider>
-          <Suspense fallback={null}>{children}</Suspense>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </AccessibilityProvider>
-        <Analytics />
       </body>
     </html>
-  )
+  );
 }
