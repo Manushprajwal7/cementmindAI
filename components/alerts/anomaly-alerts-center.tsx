@@ -120,6 +120,10 @@ export function AnomalyAlertsCenter() {
   // Use Firebase data or fallback to mock data if not available
   const rawAnomalies = currentData?.alerts || generateMockAnomalies();
 
+  // Check if the error is related to permissions and filter it out
+  const displayError =
+    error && !error.includes("permission_denied") ? error : null;
+
   // Convert union type to AnomalyDetail[] for compatibility
   const anomalies: AnomalyDetail[] = rawAnomalies.map((anomaly) => {
     if ("description" in anomaly) {
@@ -190,12 +194,12 @@ export function AnomalyAlertsCenter() {
 
   return (
     <div className="space-y-6">
-      {/* Error display */}
-      {error && (
+      {/* Error display - only show non-permission errors */}
+      {displayError && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{displayError}</AlertDescription>
         </Alert>
       )}
 

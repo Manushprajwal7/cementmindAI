@@ -133,6 +133,57 @@ export function LogisticsPlanner() {
   const [logisticsData, setLogisticsData] = useState(
     generateMockLogisticsData()
   );
+  const [dynamicTrucks, setDynamicTrucks] = useState<TruckSchedule[]>(
+    logisticsData.trucks
+  );
+
+  // Initialize and update dynamic trucks data every 3 seconds
+  useEffect(() => {
+    setDynamicTrucks(logisticsData.trucks);
+
+    // Update trucks dynamically every 3 seconds to simulate real-time changes
+    const interval = setInterval(() => {
+      setDynamicTrucks((prevTrucks) => {
+        return prevTrucks.map((truck) => {
+          // Simulate real-time changes in truck data
+          const statusOptions: Array<
+            "loading" | "transit" | "unloading" | "idle" | "maintenance"
+          > = ["loading", "transit", "unloading", "idle", "maintenance"];
+
+          // Determine next status based on current status
+          let nextStatus = truck.status;
+          const randomChange = Math.random();
+
+          // 30% chance to change status
+          if (randomChange < 0.3) {
+            const currentIndex = statusOptions.indexOf(truck.status);
+            const nextIndex = (currentIndex + 1) % statusOptions.length;
+            nextStatus = statusOptions[nextIndex];
+          }
+
+          // Update fuel level and load dynamically
+          const fuelChange = (Math.random() - 0.5) * 2; // -1 to +1
+          const loadChange = (Math.random() - 0.5) * 100; // -50 to +50
+
+          return {
+            ...truck,
+            status: nextStatus,
+            fuel_level: Math.max(
+              0,
+              Math.min(100, truck.fuel_level + fuelChange)
+            ),
+            current_load: Math.max(
+              0,
+              Math.min(truck.load_capacity, truck.current_load + loadChange)
+            ),
+            last_updated: new Date().toISOString(),
+          };
+        });
+      });
+    }, 3000); // Update every 3 seconds (3000 milliseconds)
+
+    return () => clearInterval(interval);
+  }, [logisticsData.trucks]);
 
   useEffect(() => {
     if (currentData && !loading) {
@@ -207,17 +258,17 @@ export function LogisticsPlanner() {
     setLogisticsData({ ...logisticsData });
   };
 
-  const activeTrucks = logisticsData.trucks.filter(
+  const activeTrucks = dynamicTrucks.filter(
     (truck) => truck.status !== "idle" && truck.status !== "maintenance"
   );
-  const criticalRoutes = logisticsData.trucks.filter(
+  const criticalRoutes = dynamicTrucks.filter(
     (truck) =>
       truck.fuel_level < 25 || truck.current_load > truck.load_capacity * 0.9
   );
 
   return (
     <div className="space-y-6">
-      {error && (
+      {error && !error.includes("permission_denied") && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -351,7 +402,7 @@ export function LogisticsPlanner() {
               recommendations={logisticsData.recommendations}
             />
           </div>
-          <TruckGantt trucks={logisticsData.trucks} />
+          <TruckGantt trucks={dynamicTrucks} />
         </TabsContent>
 
         <TabsContent value="map" className="space-y-6">
@@ -359,30 +410,28 @@ export function LogisticsPlanner() {
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
-          <TruckGantt trucks={logisticsData.trucks} detailed />
+          <TruckGantt trucks={dynamicTrucks} detailed />
         </TabsContent>
 
         <TabsContent value="routes" className="space-y-6">
-          <RouteOptimizer trucks={logisticsData.trucks} />
+          <RouteOptimizer trucks={dynamicTrucks} />
         </TabsContent>
 
         <TabsContent value="management" className="space-y-6">
           <TruckManagement
-            trucks={logisticsData.trucks}
-            onTruckUpdate={(trucks) =>
-              setLogisticsData((prev) => ({ ...prev, trucks }))
-            }
+            trucks={dynamicTrucks}
+            onTruckUpdate={(trucks) => setDynamicTrucks(trucks)}
           />
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-6">
-          <PredictiveMaintenance trucks={logisticsData.trucks} />
+          <PredictiveMaintenance trucks={dynamicTrucks} />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <DriverPerformance trucks={logisticsData.trucks} />
-            <DeliveryConfirmation trucks={logisticsData.trucks} />
+            <DriverPerformance trucks={dynamicTrucks} />
+            <DeliveryConfirmation trucks={dynamicTrucks} />
           </div>
         </TabsContent>
       </Tabs>
