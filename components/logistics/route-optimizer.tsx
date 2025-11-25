@@ -1,15 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Route, Zap, DollarSign, Clock, AlertTriangle } from "lucide-react"
-import type { TruckSchedule, RouteOptimization } from "@/types/logistics"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Route, Zap, IndianRupee, Clock, AlertTriangle } from "lucide-react";
+import type { TruckSchedule, RouteOptimization } from "@/types/logistics";
 
 interface RouteOptimizerProps {
-  trucks: TruckSchedule[]
+  trucks: TruckSchedule[];
 }
 
 // Generate mock route optimization data
@@ -21,7 +27,7 @@ const generateRouteOptimizations = (): RouteOptimization[] => [
     distance: 8.5,
     estimated_time: 25,
     traffic_level: "medium",
-    fuel_cost: 12.5,
+    fuel_cost: 1030,
     priority: "high",
     assigned_trucks: ["T-001", "T-003"],
   },
@@ -32,7 +38,7 @@ const generateRouteOptimizations = (): RouteOptimization[] => [
     distance: 12.3,
     estimated_time: 35,
     traffic_level: "high",
-    fuel_cost: 18.75,
+    fuel_cost: 1570,
     priority: "critical",
     assigned_trucks: ["T-002"],
   },
@@ -43,28 +49,28 @@ const generateRouteOptimizations = (): RouteOptimization[] => [
     distance: 15.7,
     estimated_time: 42,
     traffic_level: "low",
-    fuel_cost: 22.1,
+    fuel_cost: 1840,
     priority: "medium",
     assigned_trucks: ["T-001"],
   },
-]
+];
 
 export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
-  const [routes] = useState(generateRouteOptimizations())
-  const [optimizationMode, setOptimizationMode] = useState("fuel")
+  const [routes] = useState(generateRouteOptimizations());
+  const [optimizationMode, setOptimizationMode] = useState("fuel");
 
   const trafficColors = {
     low: "bg-green-100 text-green-800",
     medium: "bg-amber-100 text-amber-800",
     high: "bg-red-100 text-red-800",
-  }
+  };
 
   const priorityColors = {
     low: "bg-gray-100 text-gray-800",
     medium: "bg-blue-100 text-blue-800",
     high: "bg-orange-100 text-orange-800",
     critical: "bg-red-100 text-red-800",
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -80,8 +86,13 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Optimization Goal</label>
-                <Select value={optimizationMode} onValueChange={setOptimizationMode}>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Optimization Goal
+                </label>
+                <Select
+                  value={optimizationMode}
+                  onValueChange={setOptimizationMode}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -89,7 +100,9 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
                     <SelectItem value="fuel">Minimize Fuel Cost</SelectItem>
                     <SelectItem value="time">Minimize Travel Time</SelectItem>
                     <SelectItem value="distance">Minimize Distance</SelectItem>
-                    <SelectItem value="balanced">Balanced Optimization</SelectItem>
+                    <SelectItem value="balanced">
+                      Balanced Optimization
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -108,8 +121,13 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
           <Card key={route.route_id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{route.route_id.toUpperCase()}</CardTitle>
-                <Badge variant="outline" className={priorityColors[route.priority]}>
+                <CardTitle className="text-lg">
+                  {route.route_id.toUpperCase()}
+                </CardTitle>
+                <Badge
+                  variant="outline"
+                  className={priorityColors[route.priority]}
+                >
                   {route.priority}
                 </Badge>
               </div>
@@ -135,27 +153,36 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
                 </div>
                 <div>
                   <div className="flex items-center space-x-1 text-muted-foreground">
-                    <DollarSign className="h-3 w-3" />
+                    <IndianRupee className="h-3 w-3" />
                     <span>Fuel Cost</span>
                   </div>
-                  <p className="font-medium">${route.fuel_cost}</p>
+                  <p className="font-medium">₹{route.fuel_cost * 83}</p>
                 </div>
                 <div>
                   <div className="flex items-center space-x-1 text-muted-foreground">
                     <AlertTriangle className="h-3 w-3" />
                     <span>Traffic</span>
                   </div>
-                  <Badge variant="outline" className={trafficColors[route.traffic_level]}>
+                  <Badge
+                    variant="outline"
+                    className={trafficColors[route.traffic_level]}
+                  >
                     {route.traffic_level}
                   </Badge>
                 </div>
               </div>
 
               <div>
-                <div className="text-sm text-muted-foreground mb-2">Assigned Trucks</div>
+                <div className="text-sm text-muted-foreground mb-2">
+                  Assigned Trucks
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {route.assigned_trucks.map((truckId) => (
-                    <Badge key={truckId} variant="secondary" className="text-xs">
+                    <Badge
+                      key={truckId}
+                      variant="secondary"
+                      className="text-xs"
+                    >
                       {truckId}
                     </Badge>
                   ))}
@@ -163,7 +190,11 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
               </div>
 
               <div className="pt-2 border-t">
-                <Button variant="outline" size="sm" className="w-full bg-transparent">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full bg-transparent"
+                >
                   View Route Details
                 </Button>
               </div>
@@ -188,7 +219,9 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
               <div className="text-sm text-blue-700">Avg Time Saved</div>
             </div>
             <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="text-2xl font-bold text-amber-600">$127</div>
+              <div className="text-2xl font-bold text-amber-600">
+                ₹{Math.round(127 * 83)}
+              </div>
               <div className="text-sm text-amber-700">Daily Savings</div>
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
@@ -199,5 +232,5 @@ export function RouteOptimizer({ trucks }: RouteOptimizerProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

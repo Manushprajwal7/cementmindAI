@@ -14,6 +14,10 @@ import { TruckManagement } from "./truck-management";
 import { PredictiveMaintenance } from "./predictive-maintenance";
 import { DriverPerformance } from "./driver-performance";
 import { DeliveryConfirmation } from "./delivery-confirmation";
+import { DeliveryScheduler } from "./delivery-scheduler";
+import { DemandForecasting } from "./demand-forecasting";
+import { MaintenanceTracking } from "./maintenance-tracking";
+import { CostAnalytics } from "./cost-analytics";
 import type { TruckSchedule, LogisticsRecommendation } from "@/types/logistics";
 import { useRealTimeData } from "@/hooks/use-real-time-data";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -94,33 +98,36 @@ const generateMockLogisticsData = (): {
 
   const recommendations: LogisticsRecommendation = {
     truck_scheduling: {
-      predicted_demand: [12, 15, 18, 22, 25, 28, 24, 20, 16, 14, 12, 10],
+      predicted_demand: [8, 12, 16, 22, 28, 32, 28, 24, 20, 16, 12, 10],
       optimal_schedule: {
-        8: 3,
-        9: 4,
-        10: 5,
-        11: 6,
-        12: 7,
-        13: 6,
-        14: 5,
+        8: 2,
+        9: 3,
+        10: 4,
+        11: 5,
+        12: 6,
+        13: 5,
+        14: 4,
         15: 4,
         16: 3,
         17: 2,
+        18: 2,
+        19: 1,
       },
-      total_trucks_needed: 12,
-      peak_demand_hours: [10, 11, 12],
+      total_trucks_needed: 15,
+      peak_demand_hours: [11, 12, 13],
     },
     performance_metrics: {
-      current_supply_efficiency: 94.2,
-      inventory_turnover: 8.5,
-      average_delay: 12.3,
-      fuel_efficiency: 87.6,
+      current_supply_efficiency: 62.5,
+      inventory_turnover: 7.8,
+      average_delay: 18.5,
+      fuel_efficiency: 84.3,
     },
     improvement_opportunities: [
-      "Optimize route planning to reduce fuel consumption by 8%",
-      "Implement predictive maintenance to reduce downtime by 15%",
-      "Adjust scheduling to better match demand patterns",
-      "Consider additional truck capacity during peak hours",
+      "Optimize route planning to reduce fuel consumption by 12%",
+      "Implement predictive maintenance to reduce downtime by 20%",
+      "Adjust scheduling to better match demand patterns during peak hours",
+      "Consider additional truck capacity during morning rush hours",
+      "Improve driver training to reduce delivery delays by 15%",
     ],
   };
 
@@ -385,19 +392,21 @@ export function LogisticsPlanner() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="map">Live Map</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="schedule">Delivery Schedule</TabsTrigger>
+          <TabsTrigger value="forecasting">Demand Forecasting</TabsTrigger>
           <TabsTrigger value="routes">Route Optimizer</TabsTrigger>
           <TabsTrigger value="management">Fleet Management</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="costs">Cost Analytics</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LogisticsMap />
+
             <PerformanceMetrics
               recommendations={logisticsData.recommendations}
             />
@@ -405,12 +414,13 @@ export function LogisticsPlanner() {
           <TruckGantt trucks={dynamicTrucks} />
         </TabsContent>
 
-        <TabsContent value="map" className="space-y-6">
-          <LogisticsMap fullSize />
+        <TabsContent value="schedule" className="space-y-6">
+          <DeliveryScheduler />
+          <TruckGantt trucks={dynamicTrucks} detailed />
         </TabsContent>
 
-        <TabsContent value="schedule" className="space-y-6">
-          <TruckGantt trucks={dynamicTrucks} detailed />
+        <TabsContent value="forecasting" className="space-y-6">
+          <DemandForecasting />
         </TabsContent>
 
         <TabsContent value="routes" className="space-y-6">
@@ -425,7 +435,12 @@ export function LogisticsPlanner() {
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-6">
+          <MaintenanceTracking />
           <PredictiveMaintenance trucks={dynamicTrucks} />
+        </TabsContent>
+
+        <TabsContent value="costs" className="space-y-6">
+          <CostAnalytics />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">
