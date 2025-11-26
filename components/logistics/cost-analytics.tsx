@@ -32,6 +32,7 @@ interface CostData {
   amount: number;
   percentage: number;
   change: number;
+  [key: string]: any; // Add index signature to satisfy ChartDataInput
 }
 
 interface MonthlyCostData {
@@ -40,6 +41,7 @@ interface MonthlyCostData {
   maintenance: number;
   labor: number;
   total: number;
+  [key: string]: any; // Add index signature to satisfy ChartDataInput
 }
 
 const generateCostData = (): CostData[] => [
