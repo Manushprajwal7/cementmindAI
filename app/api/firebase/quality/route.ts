@@ -142,15 +142,19 @@ export async function GET(req: NextRequest) {
             recommendationsDoc.data()?.timestamp,
         };
       } else {
-        // Fallback to Realtime Database if available
-        const rtdb = getDatabase(admin.app);
-        if (rtdb) {
-          const rtdbSnapshot = await rtdb
-            .ref("plants/plant-1/recommendations/quality_control")
-            .once("value");
-          if (rtdbSnapshot.exists()) {
-            response.data.recommendations = rtdbSnapshot.val();
+        // Fallback to Realtime Database if available and properly initialized
+        try {
+          if (admin.database) {
+            const rtdbSnapshot = await admin.database
+              .ref("plants/plant-1/recommendations/quality_control")
+              .once("value");
+            if (rtdbSnapshot.exists()) {
+              response.data.recommendations = rtdbSnapshot.val();
+            }
           }
+        } catch (rtdbError) {
+          // Silently handle RTDB errors to prevent API failures
+          console.debug("RTDB fallback failed:", rtdbError);
         }
       }
     }

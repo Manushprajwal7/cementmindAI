@@ -170,20 +170,6 @@ export function QualityControlPanel() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{String(error)}</AlertDescription>
-        </Alert>
-      )}
-
-      {loading && (
-        <div className="flex items-center justify-center p-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <span className="ml-2">Loading quality data...</span>
-        </div>
-      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Database, Table } from "lucide-react";
+import { Loader2, Database, Table, AlertCircle, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function BigQueryAnalytics() {
@@ -12,33 +12,44 @@ export function BigQueryAnalytics() {
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [permissionError, setPermissionError] = useState<boolean>(false);
 
   const runQuery = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setError(null);
-    
+    setPermissionError(false);
+
     try {
-      const response = await fetch('/api/bigquery', {
-        method: 'POST',
+      const response = await fetch("/api/bigquery", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          sql: query.trim()
+          sql: query.trim(),
         }),
       });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      
+
       const data = await response.json();
+
+      if (!response.ok) {
+        if (data.code === "PERMISSION_DENIED") {
+          setPermissionError(true);
+          setError(
+            "BigQuery permission denied. Please contact your administrator to grant the required permissions."
+          );
+        } else {
+          throw new Error(data.error || `API error: ${response.status}`);
+        }
+        return;
+      }
+
       setResults(data);
     } catch (err: any) {
-      console.error('Error executing BigQuery:', err);
-      setError(err.message || 'Failed to execute query');
+      console.error("Error executing BigQuery:", err);
+      setError(err.message || "Failed to execute query");
     } finally {
       setLoading(false);
     }
@@ -60,10 +71,10 @@ export function BigQueryAnalytics() {
             onChange={(e) => setQuery(e.target.value)}
             className="min-h-[120px] font-mono"
           />
-          
+
           <div className="flex justify-between items-center">
-            <Button 
-              onClick={runQuery} 
+            <Button
+              onClick={runQuery}
               disabled={!query.trim() || loading}
               className="flex items-center gap-2"
             >
@@ -79,32 +90,54 @@ export function BigQueryAnalytics() {
                 </>
               )}
             </Button>
-            
+
             {results?.metadata && (
               <div className="text-sm text-muted-foreground">
-                {results.metadata.rowCount} rows • {results.metadata.executionTimeMs}ms
+                {results.metadata.rowCount} rows •{" "}
+                {results.metadata.executionTimeMs}ms
               </div>
             )}
           </div>
-          
-          {error && (
-            <Alert variant="destructive">
+
+          {permissionError && (
+            <Alert variant="destructive" className="flex items-start gap-2">
+              <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <AlertDescription>
+                  <strong>Permission Required</strong>
+                  <p className="mt-1">
+                    Your account does not have permission to run BigQuery jobs.
+                    Please contact your system administrator to grant the
+                    "BigQuery Job User" role (roles/bigquery.jobUser) to your
+                    service account.
+                  </p>
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
+
+          {error && !permissionError && (
+            <Alert variant="destructive" className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           {results?.rows && results.rows.length > 0 && (
             <div className="mt-4 border rounded-md overflow-auto">
               <div className="flex items-center gap-2 p-2 bg-muted">
                 <Table className="h-4 w-4" />
                 <span className="font-medium">Query Results</span>
               </div>
-              
+
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     {Object.keys(results.rows[0]).map((key) => (
-                      <th key={key} className="px-4 py-2 text-left text-sm font-medium">
+                      <th
+                        key={key}
+                        className="px-4 py-2 text-left text-sm font-medium"
+                      >
                         {key}
                       </th>
                     ))}
@@ -112,10 +145,15 @@ export function BigQueryAnalytics() {
                 </thead>
                 <tbody>
                   {results.rows.map((row: any, i: number) => (
-                    <tr key={i} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+                    <tr
+                      key={i}
+                      className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}
+                    >
                       {Object.values(row).map((value: any, j: number) => (
                         <td key={j} className="px-4 py-2 text-sm">
-                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                          {typeof value === "object"
+                            ? JSON.stringify(value)
+                            : String(value)}
                         </td>
                       ))}
                     </tr>
@@ -124,7 +162,7 @@ export function BigQueryAnalytics() {
               </table>
             </div>
           )}
-          
+
           {results?.rows && results.rows.length === 0 && (
             <div className="mt-4 p-4 border rounded-md text-center text-muted-foreground">
               Query executed successfully, but returned no results.
