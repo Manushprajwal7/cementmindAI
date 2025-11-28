@@ -12,6 +12,7 @@ import { CorrectionSuggestions } from "./correction-suggestions";
 import { ManualAdjustments } from "./manual-adjustments";
 import { ImpactPreview } from "./impact-preview";
 import { QualityTrends } from "./quality-trends";
+import { AIQualityEngineer } from "./ai-quality-engineer";
 import type { QualityPrediction } from "@/types/quality";
 import { useRealTimeData } from "@/hooks/use-real-time-data";
 import { useFirebaseData } from "@/hooks/use-firebase";
@@ -250,11 +251,12 @@ export function QualityControlPanel() {
       </div>
 
       <Tabs defaultValue="corrections" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="corrections">Correction Suggestions</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="manual">Manual Adjustments</TabsTrigger>
-          <TabsTrigger value="preview">Impact Preview</TabsTrigger>
+          <TabsTrigger value="ai-engineer">AI Engineer</TabsTrigger>
+          <TabsTrigger value="corrections">Correction Suggestions</TabsTrigger>
           <TabsTrigger value="trends">Quality Trends</TabsTrigger>
+          <TabsTrigger value="preview">Impact Preview</TabsTrigger>
         </TabsList>
 
         <TabsContent value="corrections" className="space-y-6">
@@ -282,6 +284,10 @@ export function QualityControlPanel() {
 
         <TabsContent value="trends" className="space-y-6">
           <QualityTrends />
+        </TabsContent>
+
+        <TabsContent value="ai-engineer" className="space-y-6">
+          <AIQualityEngineer />
         </TabsContent>
       </Tabs>
 

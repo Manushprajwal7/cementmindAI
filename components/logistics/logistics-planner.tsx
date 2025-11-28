@@ -18,6 +18,7 @@ import { DeliveryScheduler } from "./delivery-scheduler";
 import { DemandForecasting } from "./demand-forecasting";
 import { MaintenanceTracking } from "./maintenance-tracking";
 import { CostAnalytics } from "./cost-analytics";
+import { ShiftReportGenerator } from "./shift-report-generator";
 import type { TruckSchedule, LogisticsRecommendation } from "@/types/logistics";
 import { useRealTimeData } from "@/hooks/use-real-time-data";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -392,7 +393,7 @@ export function LogisticsPlanner() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="schedule">Delivery Schedule</TabsTrigger>
           <TabsTrigger value="forecasting">Demand Forecasting</TabsTrigger>
@@ -401,6 +402,7 @@ export function LogisticsPlanner() {
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="costs">Cost Analytics</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="shift-report">Shift Report</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -448,6 +450,10 @@ export function LogisticsPlanner() {
             <DriverPerformance trucks={dynamicTrucks} />
             <DeliveryConfirmation trucks={dynamicTrucks} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="shift-report" className="space-y-6">
+          <ShiftReportGenerator />
         </TabsContent>
       </Tabs>
     </div>

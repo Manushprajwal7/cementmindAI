@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     // Use service account credentials from environment variables
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-    
+
     if (clientEmail && privateKey && projectId) {
       bqOptions.credentials = {
         client_email: clientEmail,
@@ -53,30 +53,31 @@ export async function POST(req: NextRequest) {
           rowCount: rows.length,
           executionTimeMs: executionTime,
           jobId: job.id,
-          projectId
-        }
-      }), 
+          projectId,
+        },
+      }),
       { status: 200 }
     );
   } catch (err: any) {
     console.error("BigQuery API error:", err);
-    
+
     // Handle permission errors specifically
     if (err?.message?.includes("bigquery.jobs.create permission")) {
       return new Response(
-        JSON.stringify({ 
-          error: "BigQuery permission denied. Please check service account permissions.",
+        JSON.stringify({
+          error:
+            "BigQuery permission denied. Please check service account permissions.",
           code: "PERMISSION_DENIED",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }),
         { status: 403 }
       );
     }
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: err?.message || "Unknown error",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }),
       { status: 500 }
     );
