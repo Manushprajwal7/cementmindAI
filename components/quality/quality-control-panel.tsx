@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RefreshCw, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  RefreshCw,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  Eye,
+} from "lucide-react";
 import { QualityMetricsCard } from "./quality-metrics-card";
 import { CorrectionSuggestions } from "./correction-suggestions";
 import { ManualAdjustments } from "./manual-adjustments";
@@ -105,6 +111,9 @@ export function QualityControlPanel() {
   const [selectedCorrections, setSelectedCorrections] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [cloudVisionData, setCloudVisionData] = useState<any>(null);
+  const [cloudVisionLoading, setCloudVisionLoading] = useState(false);
+  const [cloudVisionError, setCloudVisionError] = useState<string | null>(null);
 
   // Update quality data when Firebase Realtime Database data changes
   useEffect(() => {
@@ -159,6 +168,90 @@ export function QualityControlPanel() {
     setPreviewMode(true);
   };
 
+  // Function to analyze quality using Cloud Vision
+  const analyzeQualityWithCloudVision = async () => {
+    setCloudVisionLoading(true);
+    setCloudVisionError(null);
+
+    try {
+      // In a real implementation, this would connect to cameras on the conveyor belt
+      // For now, we'll simulate the response with mock data
+      const mockCloudVisionResponse = {
+        metadata: {
+          timestamp: new Date().toISOString(),
+          cameraId: "conveyor-belt-01",
+          processingTimeMs: 420,
+        },
+        findings: {
+          colorInconsistencies: [
+            {
+              timestamp: "2023-05-15T14:30:15Z",
+              location: "Zone 3",
+              severity: "medium",
+              description: "Detected slight color variation in material batch",
+            },
+            {
+              timestamp: "2023-05-15T14:32:45Z",
+              location: "Zone 5",
+              severity: "low",
+              description: "Minor discoloration detected",
+            },
+          ],
+          oversizedGrains: [
+            {
+              timestamp: "2023-05-15T14:31:22Z",
+              size: 12.5,
+              threshold: 10.0,
+              location: "Screening Unit 2",
+            },
+          ],
+          impurities: [
+            {
+              timestamp: "2023-05-15T14:33:10Z",
+              type: "organic matter",
+              confidence: 0.87,
+              location: "Zone 4",
+            },
+            {
+              timestamp: "2023-05-15T14:34:55Z",
+              type: "metal fragments",
+              confidence: 0.92,
+              location: "Zone 6",
+            },
+          ],
+        },
+        summary: {
+          totalIssues: 5,
+          criticalIssues: 1,
+          warnings: 3,
+          recommendations: [
+            "Adjust screening parameters for Zone 5",
+            "Review raw material source for organic contamination",
+            "Inspect metal detectors in Zone 6",
+          ],
+        },
+      };
+
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setCloudVisionData(mockCloudVisionResponse);
+    } catch (err: any) {
+      console.error("Error analyzing with Cloud Vision:", err);
+      setCloudVisionError(
+        err.message || "Failed to analyze quality with Cloud Vision"
+      );
+    } finally {
+      setCloudVisionLoading(false);
+    }
+  };
+
+  // Function to close Cloud Vision results
+  const closeCloudVisionResults = () => {
+    setCloudVisionData(null);
+    setCloudVisionError(null);
+  };
+
   const gradeColors = {
     A: "bg-green-100 text-green-800 border-green-200",
     B: "bg-blue-100 text-blue-800 border-blue-200",
@@ -181,6 +274,26 @@ export function QualityControlPanel() {
           </p>
         </div>
         <div className="flex items-center space-x-4">
+          {/* Cloud Vision Analysis Button */}
+          <Button
+            variant="default"
+            onClick={analyzeQualityWithCloudVision}
+            disabled={cloudVisionLoading}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+          >
+            {cloudVisionLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                Analyze quality using Cloud Vision
+              </>
+            )}
+          </Button>
+
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
             <span className="text-sm text-muted-foreground">
@@ -193,6 +306,250 @@ export function QualityControlPanel() {
           </Button>
         </div>
       </div>
+
+      {/* Cloud Vision Analysis Results */}
+      {cloudVisionError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Cloud Vision Analysis Error</AlertTitle>
+          <AlertDescription>{cloudVisionError}</AlertDescription>
+        </Alert>
+      )}
+
+      {cloudVisionData && (
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Eye className="h-5 w-5 text-purple-600" />
+                Cloud Vision Quality Analysis Results
+              </h3>
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant="outline"
+                  className="bg-purple-100 text-purple-800"
+                >
+                  Live Feed
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeCloudVisionResults}
+                  className="h-6 w-6 p-0"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h4 className="font-semibold text-gray-700">
+                  Total Issues Detected
+                </h4>
+                <p className="text-2xl font-bold text-purple-600">
+                  {cloudVisionData.summary.totalIssues}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h4 className="font-semibold text-gray-700">Critical Issues</h4>
+                <p className="text-2xl font-bold text-red-600">
+                  {cloudVisionData.summary.criticalIssues}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h4 className="font-semibold text-gray-700">Warnings</h4>
+                <p className="text-2xl font-bold text-amber-600">
+                  {cloudVisionData.summary.warnings}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Color Inconsistencies */}
+              <Card>
+                <CardContent className="pt-4">
+                  <h4 className="font-semibold mb-3 text-purple-700">
+                    Color Inconsistencies
+                  </h4>
+                  {cloudVisionData.findings.colorInconsistencies.length > 0 ? (
+                    <ul className="space-y-2">
+                      {cloudVisionData.findings.colorInconsistencies.map(
+                        (issue: any, index: number) => (
+                          <li
+                            key={index}
+                            className="p-2 bg-amber-50 rounded border border-amber-200"
+                          >
+                            <div className="flex justify-between">
+                              <span className="font-medium text-sm">
+                                {issue.location}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  issue.severity === "high"
+                                    ? "bg-red-100 text-red-800"
+                                    : issue.severity === "medium"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-green-100 text-green-800"
+                                }
+                              >
+                                {issue.severity}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {issue.description}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(issue.timestamp).toLocaleTimeString()}
+                            </p>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500 italic text-sm">
+                      No color inconsistencies detected
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Oversized Grains */}
+              <Card>
+                <CardContent className="pt-4">
+                  <h4 className="font-semibold mb-3 text-purple-700">
+                    Oversized Grains
+                  </h4>
+                  {cloudVisionData.findings.oversizedGrains.length > 0 ? (
+                    <ul className="space-y-2">
+                      {cloudVisionData.findings.oversizedGrains.map(
+                        (issue: any, index: number) => (
+                          <li
+                            key={index}
+                            className="p-2 bg-red-50 rounded border border-red-200"
+                          >
+                            <div className="flex justify-between">
+                              <span className="font-medium text-sm">
+                                {issue.location}
+                              </span>
+                              <span className="text-xs font-semibold text-red-700">
+                                {issue.size}mm
+                              </span>
+                            </div>
+                            <div className="flex justify-between mt-1">
+                              <span className="text-xs text-gray-600">
+                                Threshold: {issue.threshold}mm
+                              </span>
+                              <span className="text-xs text-red-700">
+                                +
+                                {(
+                                  ((issue.size - issue.threshold) /
+                                    issue.threshold) *
+                                  100
+                                ).toFixed(1)}
+                                %
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(issue.timestamp).toLocaleTimeString()}
+                            </p>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500 italic text-sm">
+                      No oversized grains detected
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Impurities */}
+              <Card>
+                <CardContent className="pt-4">
+                  <h4 className="font-semibold mb-3 text-purple-700">
+                    Impurities
+                  </h4>
+                  {cloudVisionData.findings.impurities.length > 0 ? (
+                    <ul className="space-y-2">
+                      {cloudVisionData.findings.impurities.map(
+                        (issue: any, index: number) => (
+                          <li
+                            key={index}
+                            className="p-2 bg-red-50 rounded border border-red-200"
+                          >
+                            <div className="flex justify-between">
+                              <span className="font-medium text-sm capitalize">
+                                {issue.type}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="bg-red-100 text-red-800 text-xs"
+                              >
+                                {Math.round(issue.confidence * 100)}%
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {issue.location}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(issue.timestamp).toLocaleTimeString()}
+                            </p>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500 italic text-sm">
+                      No impurities detected
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {cloudVisionData.summary.recommendations.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold mb-2 text-purple-700">
+                  Recommendations
+                </h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  {cloudVisionData.summary.recommendations.map(
+                    (rec: string, index: number) => (
+                      <li key={index} className="text-sm text-gray-700">
+                        {rec}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+
+            <div className="mt-4 text-xs text-gray-500">
+              <p>
+                Analysis completed at{" "}
+                {new Date(cloudVisionData.metadata.timestamp).toLocaleString()}
+              </p>
+              <p>
+                Camera: {cloudVisionData.metadata.cameraId} | Processing time:{" "}
+                {cloudVisionData.metadata.processingTimeMs}ms
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quality Status Overview */}
       <Card>

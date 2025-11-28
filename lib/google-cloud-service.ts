@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Types for the data returned from Google Cloud
 export interface TelemetryData {
@@ -26,7 +26,7 @@ export interface QualityMetric {
 export interface LogisticsData {
   truckId: string;
   location: { lat: number; lng: number };
-  status: 'loading' | 'in_transit' | 'delivering' | 'returning' | 'maintenance';
+  status: "loading" | "in_transit" | "delivering" | "returning" | "maintenance";
   capacity: number;
   currentLoad: number;
   estimatedArrival: string;
@@ -45,12 +45,14 @@ export interface AnalyticsData {
 }
 
 // Function to fetch telemetry data from BigQuery
-export async function fetchTelemetryData(limit = 100): Promise<TelemetryData[]> {
+export async function fetchTelemetryData(
+  limit = 100
+): Promise<TelemetryData[]> {
   try {
-    const response = await fetch('/api/bigquery', {
-      method: 'POST',
+    const response = await fetch("/api/bigquery", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         sql: `
@@ -68,12 +70,12 @@ export async function fetchTelemetryData(limit = 100): Promise<TelemetryData[]> 
           ORDER BY timestamp DESC
           LIMIT @limit
         `,
-        params: { limit }
+        params: { limit },
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch telemetry data');
+      throw new Error("Failed to fetch telemetry data");
     }
 
     const data = await response.json();
@@ -88,19 +90,21 @@ export async function fetchTelemetryData(limit = 100): Promise<TelemetryData[]> 
       energyConsumption: row.energyConsumption,
     }));
   } catch (error) {
-    console.error('Error fetching telemetry data:', error);
+    console.error("Error fetching telemetry data:", error);
     // Return mock data for development
     return generateMockTelemetryData(limit);
   }
 }
 
 // Function to fetch quality metrics from BigQuery
-export async function fetchQualityMetrics(limit = 100): Promise<QualityMetric[]> {
+export async function fetchQualityMetrics(
+  limit = 100
+): Promise<QualityMetric[]> {
   try {
-    const response = await fetch('/api/bigquery', {
-      method: 'POST',
+    const response = await fetch("/api/bigquery", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         sql: `
@@ -117,18 +121,18 @@ export async function fetchQualityMetrics(limit = 100): Promise<QualityMetric[]>
           ORDER BY timestamp DESC
           LIMIT @limit
         `,
-        params: { limit }
+        params: { limit },
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch quality metrics');
+      throw new Error("Failed to fetch quality metrics");
     }
 
     const data = await response.json();
     return data.rows;
   } catch (error) {
-    console.error('Error fetching quality metrics:', error);
+    console.error("Error fetching quality metrics:", error);
     // Return mock data for development
     return generateMockQualityMetrics(limit);
   }
@@ -137,10 +141,10 @@ export async function fetchQualityMetrics(limit = 100): Promise<QualityMetric[]>
 // Function to fetch logistics data
 export async function fetchLogisticsData(limit = 20): Promise<LogisticsData[]> {
   try {
-    const response = await fetch('/api/bigquery', {
-      method: 'POST',
+    const response = await fetch("/api/bigquery", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         sql: `
@@ -158,12 +162,12 @@ export async function fetchLogisticsData(limit = 20): Promise<LogisticsData[]> {
           ORDER BY last_updated DESC
           LIMIT @limit
         `,
-        params: { limit }
+        params: { limit },
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch logistics data');
+      throw new Error("Failed to fetch logistics data");
     }
 
     const data = await response.json();
@@ -175,22 +179,25 @@ export async function fetchLogisticsData(limit = 20): Promise<LogisticsData[]> {
       currentLoad: row.currentLoad,
       estimatedArrival: row.estimatedArrival,
       driverId: row.driverId,
-      route: JSON.parse(row.route || '[]'),
+      route: JSON.parse(row.route || "[]"),
     }));
   } catch (error) {
-    console.error('Error fetching logistics data:', error);
+    console.error("Error fetching logistics data:", error);
     // Return mock data for development
     return generateMockLogisticsData(limit);
   }
 }
 
 // Function to fetch analytics data
-export async function fetchAnalyticsData(period = 'monthly', limit = 12): Promise<AnalyticsData[]> {
+export async function fetchAnalyticsData(
+  period = "monthly",
+  limit = 12
+): Promise<AnalyticsData[]> {
   try {
-    const response = await fetch('/api/bigquery', {
-      method: 'POST',
+    const response = await fetch("/api/bigquery", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         sql: `
@@ -206,20 +213,66 @@ export async function fetchAnalyticsData(period = 'monthly', limit = 12): Promis
           ORDER BY period DESC
           LIMIT @limit
         `,
-        params: { limit }
+        params: { limit },
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch analytics data');
+      throw new Error("Failed to fetch analytics data");
     }
 
     const data = await response.json();
     return data.rows;
   } catch (error) {
-    console.error('Error fetching analytics data:', error);
+    console.error("Error fetching analytics data:", error);
     // Return mock data for development
     return generateMockAnalyticsData(period, limit);
+  }
+}
+
+// Function to analyze telemetry data with BigQuery
+export async function analyzeTelemetryWithBigQuery(): Promise<any> {
+  try {
+    const response = await fetch("/api/bigquery/telemetry", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        operation: "analyze_telemetry",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`BigQuery API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Transform the data to match our expected structure
+    const result = {
+      metadata: {
+        timestamp: data.metadata?.timestamp || new Date().toISOString(),
+        rowCount: data.metadata?.rowCount || 0,
+        executionTimeMs: data.metadata?.executionTimeMs || 0,
+        projectId: data.metadata?.projectId || "unknown",
+      },
+      summary: {
+        avgTemperature: data.rows?.[0]?.avgTemperature || 0,
+        maxPressure: data.rows?.[0]?.maxPressure || 0,
+        minHumidity: data.rows?.[0]?.minHumidity || 0,
+        totalEnergyConsumption: data.rows?.[0]?.totalEnergyConsumption || 0,
+        anomalyCount: data.rows?.[0]?.anomalyCount || 0,
+      },
+      anomalies: data.rows?.[0]?.anomalies?.filter((a: any) => a) || [], // Filter out null values
+      trends: data.rows?.[0]?.trends?.filter((t: any) => t) || [], // Filter out null values
+    };
+
+    return result;
+  } catch (error) {
+    console.error("Error analyzing telemetry with BigQuery:", error);
+    // Return mock data for development
+    return generateMockBigQueryAnalysis();
   }
 }
 
@@ -242,7 +295,7 @@ export function useTelemetryData(refreshInterval = 10000, limit = 100) {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error'));
+          setError(err instanceof Error ? err : new Error("Unknown error"));
         }
       } finally {
         if (isMounted) {
@@ -282,7 +335,7 @@ export function useQualityMetrics(refreshInterval = 30000, limit = 100) {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error'));
+          setError(err instanceof Error ? err : new Error("Unknown error"));
         }
       } finally {
         if (isMounted) {
@@ -322,7 +375,7 @@ export function useLogisticsData(refreshInterval = 5000, limit = 20) {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error'));
+          setError(err instanceof Error ? err : new Error("Unknown error"));
         }
       } finally {
         if (isMounted) {
@@ -344,7 +397,11 @@ export function useLogisticsData(refreshInterval = 5000, limit = 20) {
 }
 
 // Hook for analytics data
-export function useAnalyticsData(period = 'monthly', refreshInterval = 60000, limit = 12) {
+export function useAnalyticsData(
+  period = "monthly",
+  refreshInterval = 60000,
+  limit = 12
+) {
   const [data, setData] = useState<AnalyticsData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -362,7 +419,7 @@ export function useAnalyticsData(period = 'monthly', refreshInterval = 60000, li
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error'));
+          setError(err instanceof Error ? err : new Error("Unknown error"));
         }
       } finally {
         if (isMounted) {
@@ -387,7 +444,7 @@ export function useAnalyticsData(period = 'monthly', refreshInterval = 60000, li
 function generateMockTelemetryData(count: number): TelemetryData[] {
   const data: TelemetryData[] = [];
   const now = new Date();
-  
+
   for (let i = 0; i < count; i++) {
     const timestamp = new Date(now.getTime() - i * 60000); // 1 minute intervals
     data.push({
@@ -401,14 +458,14 @@ function generateMockTelemetryData(count: number): TelemetryData[] {
       energyConsumption: 80 + Math.random() * 40, // 80-120
     });
   }
-  
+
   return data;
 }
 
 function generateMockQualityMetrics(count: number): QualityMetric[] {
   const data: QualityMetric[] = [];
   const now = new Date();
-  
+
   for (let i = 0; i < count; i++) {
     const timestamp = new Date(now.getTime() - i * 3600000); // 1 hour intervals
     data.push({
@@ -422,64 +479,80 @@ function generateMockQualityMetrics(count: number): QualityMetric[] {
       qualityScore: 70 + Math.random() * 30, // 70-100
     });
   }
-  
+
   return data;
 }
 
 function generateMockLogisticsData(count: number): LogisticsData[] {
-  const statuses: LogisticsData['status'][] = ['loading', 'in_transit', 'delivering', 'returning', 'maintenance'];
+  const statuses: LogisticsData["status"][] = [
+    "loading",
+    "in_transit",
+    "delivering",
+    "returning",
+    "maintenance",
+  ];
   const data: LogisticsData[] = [];
-  
+
   for (let i = 0; i < count; i++) {
     const now = new Date();
     const arrivalTime = new Date(now.getTime() + Math.random() * 3600000 * 8); // 0-8 hours from now
-    
+
     data.push({
       truckId: `T-${1000 + i}`,
-      location: { 
-        lat: 37.7749 + (Math.random() - 0.5) * 0.2, 
-        lng: -122.4194 + (Math.random() - 0.5) * 0.2 
+      location: {
+        lat: 37.7749 + (Math.random() - 0.5) * 0.2,
+        lng: -122.4194 + (Math.random() - 0.5) * 0.2,
       },
       status: statuses[Math.floor(Math.random() * statuses.length)],
       capacity: 10 + Math.floor(Math.random() * 10), // 10-20
       currentLoad: Math.floor(Math.random() * 20), // 0-20
       estimatedArrival: arrivalTime.toISOString(),
       driverId: `D-${2000 + i}`,
-      route: Array(Math.floor(3 + Math.random() * 5)).fill(0).map(() => ({
-        lat: 37.7749 + (Math.random() - 0.5) * 0.2,
-        lng: -122.4194 + (Math.random() - 0.5) * 0.2
-      })),
+      route: Array(Math.floor(3 + Math.random() * 5))
+        .fill(0)
+        .map(() => ({
+          lat: 37.7749 + (Math.random() - 0.5) * 0.2,
+          lng: -122.4194 + (Math.random() - 0.5) * 0.2,
+        })),
     });
   }
-  
+
   return data;
 }
 
-function generateMockAnalyticsData(period: string, count: number): AnalyticsData[] {
+function generateMockAnalyticsData(
+  period: string,
+  count: number
+): AnalyticsData[] {
   const data: AnalyticsData[] = [];
   const now = new Date();
-  
+
   for (let i = 0; i < count; i++) {
     let periodLabel: string;
-    
-    if (period === 'daily') {
+
+    if (period === "daily") {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      periodLabel = date.toISOString().split('T')[0];
-    } else if (period === 'weekly') {
+      periodLabel = date.toISOString().split("T")[0];
+    } else if (period === "weekly") {
       const date = new Date(now);
-      date.setDate(date.getDate() - (i * 7));
-      periodLabel = `Week ${date.getFullYear()}-${Math.ceil((date.getDate() + date.getDay()) / 7)}`;
-    } else if (period === 'monthly') {
+      date.setDate(date.getDate() - i * 7);
+      periodLabel = `Week ${date.getFullYear()}-${Math.ceil(
+        (date.getDate() + date.getDay()) / 7
+      )}`;
+    } else if (period === "monthly") {
       const date = new Date(now);
       date.setMonth(date.getMonth() - i);
-      periodLabel = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    } else { // yearly
+      periodLabel = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+    } else {
+      // yearly
       const date = new Date(now);
       date.setFullYear(date.getFullYear() - i);
       periodLabel = date.getFullYear().toString();
     }
-    
+
     data.push({
       period: periodLabel,
       production: 5000 + Math.random() * 3000, // 5000-8000
@@ -490,6 +563,50 @@ function generateMockAnalyticsData(period: string, count: number): AnalyticsData
       customerSatisfaction: 70 + Math.random() * 30, // 70-100
     });
   }
-  
+
   return data;
+}
+
+// Mock data generator for BigQuery analysis
+function generateMockBigQueryAnalysis(): any {
+  return {
+    metadata: {
+      timestamp: new Date().toISOString(),
+      rowCount: 150,
+      executionTimeMs: 1245,
+      projectId: "cementmind-project",
+    },
+    summary: {
+      avgTemperature: 85.3,
+      maxPressure: 7.2,
+      minHumidity: 35.1,
+      totalEnergyConsumption: 12500,
+      anomalyCount: 3,
+    },
+    trends: [
+      { metric: "temperature", trend: "increasing", change: "+2.3%" },
+      { metric: "pressure", trend: "stable", change: "0.1%" },
+      { metric: "humidity", trend: "decreasing", change: "-1.7%" },
+    ],
+    anomalies: [
+      {
+        timestamp: "2023-05-15T14:30:00Z",
+        metric: "temperature",
+        value: 98.7,
+        threshold: 95.0,
+      },
+      {
+        timestamp: "2023-05-15T16:45:00Z",
+        metric: "pressure",
+        value: 7.2,
+        threshold: 7.0,
+      },
+      {
+        timestamp: "2023-05-15T18:20:00Z",
+        metric: "vibration",
+        value: 4.8,
+        threshold: 4.5,
+      },
+    ],
+  };
 }

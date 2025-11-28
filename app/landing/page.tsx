@@ -133,7 +133,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/signin"
-              className="px-4 py-2 text-sm font-medium text-gray-200 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
             >
               Sign In
             </Link>
@@ -184,6 +184,12 @@ export default function LandingPage() {
                 >
                   Get Started
                   <ChevronRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="#features"
+                  className="px-10 py-5.5 text-sm font-large bg-white/10 hover:bg-white/20 rounded-full transition-all flex items-center gap-2 text-white border border-white/20"
+                >
+                  Learn More
                 </Link>
               </div>
 
@@ -313,6 +319,32 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
+        <section className="container mx-auto px-4 py-20 md:py-32">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Ready to Transform Your Cement Production?
+            </h2>
+            <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+              Join other leading cement manufacturers who have already
+              revolutionized their operations with CementMind AI
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/signup"
+                className="px-10 py-5.5 text-sm font-large bg-gradient-to-r from-blue-500 to-purple-500 rounded-full hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-105 flex items-center gap-2 text-white"
+              >
+                Start Free Trial
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/signin"
+                className="px-10 py-5.5 text-sm font-large bg-white/10 hover:bg-white/20 rounded-full transition-all flex items-center gap-2 text-white border border-white/20"
+              >
+                Sign In to Your Account
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}

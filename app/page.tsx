@@ -13,7 +13,7 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      // If not authenticated, redirect to landing page
+      // If not authenticated, redirect to landing page (onboarding screen)
       router.push("/landing");
     }
   }, [user, loading, router]);
@@ -29,7 +29,9 @@ export default function RootPage() {
     );
   }
 
+  // If not authenticated, redirect to landing page
   if (!user) {
+    router.push("/landing");
     return null;
   }
 

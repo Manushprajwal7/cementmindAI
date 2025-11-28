@@ -26,12 +26,14 @@ export function TopNav() {
   const [selectedPlant, setSelectedPlant] = useState("plant-1");
   const [timeRange, setTimeRange] = useState("live");
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showGeminiChat, setShowGeminiChat] = useState(false);
   const { user, logout } = useFirebaseAuth();
   const router = useRouter();
 
   const handleProfileClick = () => {
     router.push("/profile");
+    setShowProfileMenu(false);
   };
 
   const handleLogout = async () => {
@@ -119,8 +121,8 @@ export function TopNav() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu open={showProfileMenu} onOpenChange={setShowProfileMenu}>
+          <DropdownMenuTrigger>
             <Button variant="ghost" className="flex items-center space-x-2">
               <User className="h-5 w-5" />
               <span>{getUserDisplayName()}</span>
